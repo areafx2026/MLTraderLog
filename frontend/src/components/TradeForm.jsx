@@ -19,6 +19,10 @@ const defaults = {
   entry_price: '',
   sl_price: '',
   tp_price: '',
+  lot_size: '',
+  gross_eur: '',
+  commission: '',
+  swap: '',
   result_eur: '',
   result_status: 'OPEN',
   duration_days: '',
@@ -49,7 +53,6 @@ export default function TradeForm({ initial, onSave, onCancel }) {
 
   const [analyzingCtrader, setAnalyzingCtrader] = useState(false);
   const [analyzingCharts, setAnalyzingCharts] = useState(false);
-  const [ctraderReasoning, setCtraderReasoning] = useState(null);
   const [chartsReasoning, setChartsReasoning] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -68,7 +71,6 @@ export default function TradeForm({ initial, onSave, onCancel }) {
   const analyzeCtrader = async () => {
     if (!ctraderFile) return;
     setAnalyzingCtrader(true);
-    setCtraderReasoning(null);
     try {
       const fd = new FormData();
       fd.append('screenshot', ctraderFile);
@@ -82,8 +84,10 @@ export default function TradeForm({ initial, onSave, onCancel }) {
         direction: e.direction || f.direction,
         trade_date: e.trade_date || f.trade_date,
         entry_price: e.entry_price ?? f.entry_price,
-        sl_price: f.sl_price, // not from ctrader
-        tp_price: f.tp_price, // not from ctrader
+        lot_size: e.lot_size ?? f.lot_size,
+        gross_eur: e.gross_eur ?? f.gross_eur,
+        commission: e.commission ?? f.commission,
+        swap: e.swap ?? f.swap,
         result_eur: e.result_eur ?? f.result_eur,
         result_status: e.result_status || f.result_status,
         duration_days: e.duration_days ?? f.duration_days,
@@ -178,11 +182,7 @@ export default function TradeForm({ initial, onSave, onCancel }) {
                 onClick={() => window.open(ctraderPreview.startsWith('blob:') ? ctraderPreview : `/uploads/${ctraderPreview}`)}
               />
               <div className="ctrader-actions">
-                <button
-                  className="btn-primary"
-                  onClick={analyzeCtrader}
-                  disabled={analyzingCtrader || !ctraderFile}
-                >
+                <button className="btn-primary" onClick={analyzeCtrader} disabled={analyzingCtrader || !ctraderFile}>
                   {analyzingCtrader ? '⏳ Analysiere…' : '🔍 Analysieren'}
                 </button>
                 <button className="btn-secondary" onClick={() => { setCtraderFile(null); setCtraderPreview(null); set('ctrader_screenshot', null); }}>
@@ -202,7 +202,7 @@ export default function TradeForm({ initial, onSave, onCancel }) {
         </div>
       </section>
 
-      {/* ── Basis (vorausgefüllt von cTrader-Analyse) ─────────────────────── */}
+      {/* ── Basis ─────────────────────────────────────────────────────────── */}
       <section className="form-section">
         <div className="section-label">
           Basis
@@ -228,6 +228,7 @@ export default function TradeForm({ initial, onSave, onCancel }) {
             </div>
           </div>
         </div>
+
         <div className="form-row-4" style={{ marginTop: '0.75rem' }}>
           <div className="field">
             <label>Entry-Kurs</label>
@@ -242,11 +243,28 @@ export default function TradeForm({ initial, onSave, onCancel }) {
             <input type="number" step="0.00001" placeholder="1.37000" value={form.tp_price} onChange={e => set('tp_price', e.target.value)} />
           </div>
           <div className="field">
-            <label>P&L (EUR)</label>
-            <input type="number" step="0.01" placeholder="174.66" value={form.result_eur} onChange={e => set('result_eur', e.target.value)} />
+            <label>Positionsgröße (Lots)</label>
+            <input type="number" step="0.01" placeholder="0.20" value={form.lot_size} onChange={e => set('lot_size', e.target.value)} />
           </div>
         </div>
-        <div className="form-row-3" style={{ marginTop: '0.75rem' }}>
+
+        <div className="cost-row" style={{ marginTop: '0.75rem' }}>
+          <div className="field">
+            <label>Brutto (EUR)</label>
+            <input type="number" step="0.01" placeholder="173.30" value={form.gross_eur} onChange={e => set('gross_eur', e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Commission (EUR)</label>
+            <input type="number" step="0.01" placeholder="-1.19" value={form.commission} onChange={e => set('commission', e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Swap (EUR)</label>
+            <input type="number" step="0.01" placeholder="2.55" value={form.swap} onChange={e => set('swap', e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Netto P&L (EUR)</label>
+            <input type="number" step="0.01" placeholder="174.66" value={form.result_eur} onChange={e => set('result_eur', e.target.value)} />
+          </div>
           <div className="field">
             <label>Status</label>
             <div className="seg-control">
@@ -259,7 +277,6 @@ export default function TradeForm({ initial, onSave, onCancel }) {
             <label>Dauer (Tage)</label>
             <input type="number" min="0" placeholder="7" value={form.duration_days} onChange={e => set('duration_days', e.target.value)} />
           </div>
-          <div className="field" />
         </div>
       </section>
 
@@ -290,11 +307,7 @@ export default function TradeForm({ initial, onSave, onCancel }) {
           ))}
         </div>
         {chartFiles.some(Boolean) && (
-          <button
-            className="btn-primary analyze-charts-btn"
-            onClick={analyzeCharts}
-            disabled={analyzingCharts}
-          >
+          <button className="btn-primary analyze-charts-btn" onClick={analyzeCharts} disabled={analyzingCharts}>
             {analyzingCharts ? '⏳ Analysiere Charts…' : '🔍 Charts analysieren'}
           </button>
         )}
@@ -306,7 +319,7 @@ export default function TradeForm({ initial, onSave, onCancel }) {
         )}
       </section>
 
-      {/* ── Kontext (vorausgefüllt von Chart-Analyse) ─────────────────────── */}
+      {/* ── Kontext ───────────────────────────────────────────────────────── */}
       <section className="form-section">
         <div className="section-label">
           Daily-Kontext & Zone
@@ -334,7 +347,7 @@ export default function TradeForm({ initial, onSave, onCancel }) {
         </div>
       </section>
 
-      {/* ── Anlauf ────────────────────────────────────────────────────────── */}
+      {/* ── Anlauf & H1 ───────────────────────────────────────────────────── */}
       <section className="form-section">
         <div className="section-label">Anlauf-Charakter & H1-Verhalten</div>
         <div className="field" style={{ marginBottom: '0.75rem' }}>

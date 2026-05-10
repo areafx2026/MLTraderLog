@@ -56,6 +56,13 @@
   gap: 1rem;
 }
 
+.cost-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1.2fr 0.8fr;
+  gap: 0.75rem;
+  align-items: end;
+}
+
 .field { display: flex; flex-direction: column; }
 
 .approach-seg { width: 100%; }
@@ -149,10 +156,7 @@
 }
 .chart-remove:hover { background: var(--loss); }
 
-.analyze-charts-btn {
-  margin-top: 0.25rem;
-  font-size: 0.85rem;
-}
+.analyze-charts-btn { margin-top: 0.25rem; font-size: 0.85rem; }
 
 .ai-reasoning {
   margin-top: 0.75rem;

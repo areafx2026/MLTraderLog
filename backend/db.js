@@ -29,7 +29,7 @@ const initDb = async () => {
         -- Anlauf-Charakter
         approach_character VARCHAR(20) NOT NULL CHECK (approach_character IN ('IMPULSIV', 'MEANDERND', 'LANGSAM')),
 
-        -- H1-Verhalten an der Zone (Checkboxen)
+        -- H1-Verhalten an der Zone
         h1_slowing BOOLEAN DEFAULT FALSE,
         h1_wicks BOOLEAN DEFAULT FALSE,
         h1_stabilization BOOLEAN DEFAULT FALSE,
@@ -41,7 +41,13 @@ const initDb = async () => {
         sl_price NUMERIC(12, 5),
         tp_price NUMERIC(12, 5),
 
-        -- Ergebnis
+        -- Positionsgröße
+        lot_size NUMERIC(10, 4),
+
+        -- Kosten & Ergebnis
+        gross_eur NUMERIC(10, 2),
+        commission NUMERIC(10, 2),
+        swap NUMERIC(10, 2),
         result_eur NUMERIC(10, 2),
         result_status VARCHAR(20) CHECK (result_status IN ('WIN', 'LOSS', 'BE', 'OPEN')),
         duration_days INTEGER,
@@ -56,6 +62,21 @@ const initDb = async () => {
         notes TEXT
       );
     `);
+
+    // Migrations: neue Spalten hinzufügen falls noch nicht vorhanden
+    const migrations = [
+      `ALTER TABLE trades ADD COLUMN IF NOT EXISTS lot_size NUMERIC(10, 4)`,
+      `ALTER TABLE trades ADD COLUMN IF NOT EXISTS gross_eur NUMERIC(10, 2)`,
+      `ALTER TABLE trades ADD COLUMN IF NOT EXISTS commission NUMERIC(10, 2)`,
+      `ALTER TABLE trades ADD COLUMN IF NOT EXISTS swap NUMERIC(10, 2)`,
+      `ALTER TABLE trades ADD COLUMN IF NOT EXISTS ctrader_screenshot VARCHAR(255)`,
+      `ALTER TABLE trades ADD COLUMN IF NOT EXISTS screenshot_3 VARCHAR(255)`,
+    ];
+
+    for (const sql of migrations) {
+      await client.query(sql);
+    }
+
     console.log('Database initialized');
   } finally {
     client.release();

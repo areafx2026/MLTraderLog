@@ -65,11 +65,15 @@ export default function TradeDetail({ trade: t, onEdit, onDelete, onBack }) {
         </div>
 
         <div className="detail-card">
-          <div className="card-title">Levels</div>
+          <div className="card-title">Levels &amp; Kosten</div>
           <div className="card-row"><span>Entry</span><span className="mono">{fmtPrice(t.entry_price)}</span></div>
           <div className="card-row"><span>Stop Loss</span><span className="mono" style={{color:'var(--loss)'}}>{fmtPrice(t.sl_price)}</span></div>
           <div className="card-row"><span>Take Profit</span><span className="mono" style={{color:'var(--win)'}}>{fmtPrice(t.tp_price)}</span></div>
           <div className="card-row"><span>R:R</span><span className="mono" style={{color:'var(--accent)'}}>{rr ? `1 : ${rr}` : '—'}</span></div>
+          <div className="card-row"><span>Lots</span><span className="mono">{t.lot_size ?? '—'}</span></div>
+          <div className="card-row"><span>Brutto</span><span className="mono">{t.gross_eur != null ? `${t.gross_eur} €` : '—'}</span></div>
+          <div className="card-row"><span>Commission</span><span className="mono" style={{color:'var(--loss)'}}>{t.commission != null ? `${t.commission} €` : '—'}</span></div>
+          <div className="card-row"><span>Swap</span><span className="mono" style={{color: t.swap >= 0 ? 'var(--win)' : 'var(--loss)'}}>{t.swap != null ? `${t.swap} €` : '—'}</span></div>
         </div>
       </div>
 
