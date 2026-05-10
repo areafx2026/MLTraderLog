@@ -27,6 +27,7 @@ services:
       DB_NAME: mltraderlog
       DB_USER: mltrader
       DB_PASSWORD: ${DB_PASSWORD}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
     volumes:
       - mltraderlog_uploads:/app/uploads
     depends_on:
