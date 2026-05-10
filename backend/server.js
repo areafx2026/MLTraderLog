@@ -132,7 +132,6 @@ Analysiere und gib NUR valides JSON zurück, kein Markdown, keine Erklärung:
   "daily_context": "RANGE, UPTREND oder DOWNTREND (aus dem D1 Chart)",
   "daily_context_reasoning": "Ein Satz Begründung auf Deutsch",
   "zone_tests": Zahl (wie oft wurde die lila S/R Zone getestet, 0 wenn unklar),
-  "zone_last_test_days": Zahl (ca. Tage seit letztem Test vor diesem Trade, 0 wenn unklar),
   "approach_character": "IMPULSIV (schnelle gerichtete Bewegung), MEANDERND (seitliche Drift) oder LANGSAM (langsam graduell)",
   "approach_reasoning": "Ein Satz Begründung auf Deutsch",
   "h1_slowing": true oder false (Momentum verlangsamte sich sichtbar beim Annähern an die Zone im H1),

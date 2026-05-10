@@ -139,7 +139,6 @@ export default function TradeForm({ initial, onSave, onCancel }) {
         ...f,
         daily_context: e.daily_context || f.daily_context,
         zone_tests: e.zone_tests ?? f.zone_tests,
-        zone_last_test_days: e.zone_last_test_days ?? f.zone_last_test_days,
         approach_character: e.approach_character || f.approach_character,
         h1_slowing: e.h1_slowing ?? f.h1_slowing,
         h1_wicks: e.h1_wicks ?? f.h1_wicks,
