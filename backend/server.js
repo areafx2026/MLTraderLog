@@ -67,7 +67,7 @@ app.post('/api/analyze/ctrader', upload.single('screenshot'), async (req, res) =
   "entry_price": Zahl,
   "close_price": Zahl,
   "trade_date": "YYYY-MM-DD (Opening time Datum)",
-  "duration_days": Zahl (Kalendertage zwischen Opening time und Closing time, also alle Tage inklusive Wochenenden),
+  "close_date": "YYYY-MM-DD (Closing time Datum)",
   "lot_size": Zahl (Closing Quantity in Lots),
   "gross_eur": Zahl (Gross realised Wert, negativ wenn Verlust),
   "commission": Zahl (Realised broker commission, negativ wenn Kosten),
@@ -86,6 +86,12 @@ Nur das JSON-Objekt zurückgeben, nichts sonst.`,
     const text = data.content?.find(b => b.type === 'text')?.text || '{}';
     const clean = text.replace(/```json|```/g, '').trim();
     const extracted = JSON.parse(clean);
+    // Berechne Dauer im Backend: close_date minus trade_date in Kalendertagen
+    if (extracted.trade_date && extracted.close_date) {
+      const open = new Date(extracted.trade_date);
+      const close = new Date(extracted.close_date);
+      extracted.duration_days = Math.round((close - open) / (1000 * 60 * 60 * 24));
+    }
     res.json({ filename: req.file.filename, extracted });
   } catch (err) {
     console.error('cTrader analyze error:', err);
