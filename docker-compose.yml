@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: mltraderlog_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mltraderlog
+      POSTGRES_USER: mltrader
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mltraderlog_db_data:/var/lib/postgresql/data
+    networks:
+      - mltraderlog_net
+
+  backend:
+    build: ./backend
+    container_name: mltraderlog_backend
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      PORT: 3002
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: mltraderlog
+      DB_USER: mltrader
+      DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mltraderlog_uploads:/app/uploads
+    depends_on:
+      - db
+    networks:
+      - mltraderlog_net
+
+  frontend:
+    build: ./frontend
+    container_name: mltraderlog_frontend
+    restart: unless-stopped
+    ports:
+      - "8082:80"
+    depends_on:
+      - backend
+    networks:
+      - mltraderlog_net
+
+volumes:
+  mltraderlog_db_data:
+  mltraderlog_uploads:
+
+networks:
+  mltraderlog_net:
+    driver: bridge

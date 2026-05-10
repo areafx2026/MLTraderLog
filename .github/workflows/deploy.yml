@@ -1,0 +1,22 @@
+name: Deploy MLTraderLog
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to thanos
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.THANOS_HOST }}
+          username: ${{ secrets.THANOS_USER }}
+          key: ${{ secrets.THANOS_SSH_KEY }}
+          script: |
+            cd ~/docker/MLTraderLog
+            git pull origin main
+            docker compose build --no-cache
+            docker compose up -d
+            docker image prune -f

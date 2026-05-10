@@ -1,0 +1,173 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0a0c0f;
+  --bg2:      #111418;
+  --bg3:      #181c22;
+  --border:   #1e2530;
+  --border2:  #2a3340;
+  --text:     #c8d4e0;
+  --text2:    #6b7f96;
+  --text3:    #3d4f61;
+  --accent:   #00d4aa;
+  --accent2:  #0099cc;
+  --win:      #00c47a;
+  --loss:     #ff4d6a;
+  --be:       #ffaa00;
+  --open:     #6b7f96;
+  --mono:     'Space Mono', monospace;
+  --sans:     'DM Sans', sans-serif;
+}
+
+html { font-size: 14px; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-weight: 400;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* Inputs */
+input, select, textarea {
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 0.93rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+}
+select option { background: var(--bg2); }
+
+textarea { resize: vertical; min-height: 80px; }
+
+/* Buttons */
+button {
+  font-family: var(--sans);
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.55rem 1.2rem;
+  transition: all 0.15s;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #000;
+}
+.btn-primary:hover { background: #00eecc; }
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+}
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+.btn-danger {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text3);
+  font-size: 0.8rem;
+}
+.btn-danger:hover { color: var(--loss); }
+
+/* Labels */
+label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.35rem;
+}
+
+/* Checkbox group */
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 0.85rem;
+  color: var(--text2);
+  user-select: none;
+}
+.checkbox-item.checked {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(0, 212, 170, 0.07);
+}
+.checkbox-item input { display: none; }
+
+/* Status badges */
+.badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.badge-WIN  { background: rgba(0,196,122,0.12); color: var(--win); border: 1px solid rgba(0,196,122,0.3); }
+.badge-LOSS { background: rgba(255,77,106,0.12); color: var(--loss); border: 1px solid rgba(255,77,106,0.3); }
+.badge-BE   { background: rgba(255,170,0,0.12); color: var(--be); border: 1px solid rgba(255,170,0,0.3); }
+.badge-OPEN { background: rgba(107,127,150,0.12); color: var(--open); border: 1px solid rgba(107,127,150,0.3); }
+
+.badge-LONG  { background: rgba(0,196,122,0.08); color: var(--win); border: 1px solid rgba(0,196,122,0.2); }
+.badge-SHORT { background: rgba(255,77,106,0.08); color: var(--loss); border: 1px solid rgba(255,77,106,0.2); }
+
+/* Segmented control */
+.seg-control {
+  display: flex;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.seg-control button {
+  flex: 1;
+  background: transparent;
+  border-radius: 0;
+  border: none;
+  color: var(--text2);
+  padding: 0.45rem 0.5rem;
+  font-size: 0.82rem;
+}
+.seg-control button.active {
+  background: var(--accent);
+  color: #000;
+  font-weight: 700;
+}
+
+/* Mono numbers */
+.mono { font-family: var(--mono); }
+.pnl-pos { color: var(--win); }
+.pnl-neg { color: var(--loss); }
+.pnl-zero { color: var(--text2); }
