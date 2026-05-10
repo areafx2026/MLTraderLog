@@ -87,12 +87,22 @@ export default function TradeDetail({ trade: t, onEdit, onDelete, onBack }) {
         </div>
       )}
 
-      {(t.screenshot_1 || t.screenshot_2) && (
+      {t.ctrader_screenshot && (
         <div className="detail-card detail-card-full">
-          <div className="card-title">Screenshots</div>
+          <div className="card-title">cTrader Deal</div>
           <div className="detail-screenshots">
-            {t.screenshot_1 && <img src={`/uploads/${t.screenshot_1}`} alt="Screenshot 1" onClick={() => window.open(`/uploads/${t.screenshot_1}`)} />}
-            {t.screenshot_2 && <img src={`/uploads/${t.screenshot_2}`} alt="Screenshot 2" onClick={() => window.open(`/uploads/${t.screenshot_2}`)} />}
+            <img src={`/uploads/${t.ctrader_screenshot}`} alt="cTrader" onClick={() => window.open(`/uploads/${t.ctrader_screenshot}`)} style={{ maxWidth: '320px' }} />
+          </div>
+        </div>
+      )}
+
+      {(t.screenshot_1 || t.screenshot_2 || t.screenshot_3) && (
+        <div className="detail-card detail-card-full">
+          <div className="card-title">Chart Screenshots</div>
+          <div className="detail-screenshots">
+            {t.screenshot_1 && <img src={`/uploads/${t.screenshot_1}`} alt="Chart 1" onClick={() => window.open(`/uploads/${t.screenshot_1}`)} />}
+            {t.screenshot_2 && <img src={`/uploads/${t.screenshot_2}`} alt="Chart 2" onClick={() => window.open(`/uploads/${t.screenshot_2}`)} />}
+            {t.screenshot_3 && <img src={`/uploads/${t.screenshot_3}`} alt="Chart 3" onClick={() => window.open(`/uploads/${t.screenshot_3}`)} />}
           </div>
         </div>
       )}

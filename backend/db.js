@@ -47,8 +47,10 @@ const initDb = async () => {
         duration_days INTEGER,
 
         -- Screenshots
+        ctrader_screenshot VARCHAR(255),
         screenshot_1 VARCHAR(255),
         screenshot_2 VARCHAR(255),
+        screenshot_3 VARCHAR(255),
 
         -- Notizen
         notes TEXT

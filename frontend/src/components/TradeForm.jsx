@@ -23,8 +23,10 @@ const defaults = {
   result_status: 'OPEN',
   duration_days: '',
   notes: '',
+  ctrader_screenshot: null,
   screenshot_1: null,
   screenshot_2: null,
+  screenshot_3: null,
 };
 
 const PAIRS = ['EURGBP', 'GBPNZD', 'GBPAUD', 'EURCAD', 'EURJPY', 'GBPJPY', 'CADJPY', 'USDCAD', 'WTI', 'ANDERE'];
@@ -36,49 +38,123 @@ export default function TradeForm({ initial, onSave, onCancel }) {
     trade_date: initial.trade_date ? initial.trade_date.slice(0, 10) : defaults.trade_date,
   } : defaults);
 
-  const [screenshots, setScreenshots] = useState({
-    s1: initial?.screenshot_1 || null,
-    s2: initial?.screenshot_2 || null,
-  });
-  const [uploading, setUploading] = useState(false);
+  const [ctraderFile, setCtraderFile] = useState(null);
+  const [ctraderPreview, setCtraderPreview] = useState(initial?.ctrader_screenshot || null);
+  const [chartFiles, setChartFiles] = useState([null, null, null]);
+  const [chartPreviews, setChartPreviews] = useState([
+    initial?.screenshot_1 || null,
+    initial?.screenshot_2 || null,
+    initial?.screenshot_3 || null,
+  ]);
+
+  const [analyzingCtrader, setAnalyzingCtrader] = useState(false);
+  const [analyzingCharts, setAnalyzingCharts] = useState(false);
+  const [ctraderReasoning, setCtraderReasoning] = useState(null);
+  const [chartsReasoning, setChartsReasoning] = useState(null);
   const [saving, setSaving] = useState(false);
-  const fileRef1 = useRef();
-  const fileRef2 = useRef();
+
+  const ctraderRef = useRef();
+  const chartRefs = [useRef(), useRef(), useRef()];
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const toggle = (k) => setForm(f => ({ ...f, [k]: !f[k] }));
 
-  // Computed R:R
-  const rr = (() => {
-    const e = parseFloat(form.entry_price);
-    const sl = parseFloat(form.sl_price);
-    const tp = parseFloat(form.tp_price);
-    if (!e || !sl || !tp) return null;
-    const risk = Math.abs(e - sl);
-    const reward = Math.abs(tp - e);
-    if (!risk) return null;
-    return (reward / risk).toFixed(2);
-  })();
-
-  const uploadFile = async (file, slot) => {
-    setUploading(true);
-    const fd = new FormData();
-    fd.append('screenshots', file);
-    const res = await fetch(`${API}/upload`, { method: 'POST', body: fd });
-    const data = await res.json();
-    const filename = data.files[0];
-    setScreenshots(s => ({ ...s, [slot]: filename }));
-    set(slot === 's1' ? 'screenshot_1' : 'screenshot_2', filename);
-    setUploading(false);
+  // ── cTrader upload & analyze ─────────────────────────────────────────────
+  const handleCtraderFile = (file) => {
+    setCtraderFile(file);
+    setCtraderPreview(URL.createObjectURL(file));
   };
 
-  const removeScreenshot = (slot) => {
-    setScreenshots(s => ({ ...s, [slot]: null }));
-    set(slot === 's1' ? 'screenshot_1' : 'screenshot_2', null);
+  const analyzeCtrader = async () => {
+    if (!ctraderFile) return;
+    setAnalyzingCtrader(true);
+    setCtraderReasoning(null);
+    try {
+      const fd = new FormData();
+      fd.append('screenshot', ctraderFile);
+      const res = await fetch(`${API}/analyze/ctrader`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      const e = data.extracted;
+      setForm(f => ({
+        ...f,
+        pair: e.pair || f.pair,
+        direction: e.direction || f.direction,
+        trade_date: e.trade_date || f.trade_date,
+        entry_price: e.entry_price ?? f.entry_price,
+        sl_price: f.sl_price, // not from ctrader
+        tp_price: f.tp_price, // not from ctrader
+        result_eur: e.result_eur ?? f.result_eur,
+        result_status: e.result_status || f.result_status,
+        duration_days: e.duration_days ?? f.duration_days,
+        ctrader_screenshot: data.filename,
+      }));
+    } catch (err) {
+      alert('Analyse fehlgeschlagen: ' + err.message);
+    }
+    setAnalyzingCtrader(false);
+  };
+
+  // ── Chart upload & analyze ───────────────────────────────────────────────
+  const handleChartFile = (file, idx) => {
+    const newFiles = [...chartFiles];
+    newFiles[idx] = file;
+    setChartFiles(newFiles);
+    const newPreviews = [...chartPreviews];
+    newPreviews[idx] = URL.createObjectURL(file);
+    setChartPreviews(newPreviews);
+  };
+
+  const removeChart = (idx) => {
+    const newFiles = [...chartFiles];
+    newFiles[idx] = null;
+    setChartFiles(newFiles);
+    const newPreviews = [...chartPreviews];
+    newPreviews[idx] = null;
+    setChartPreviews(newPreviews);
+    const keys = ['screenshot_1', 'screenshot_2', 'screenshot_3'];
+    set(keys[idx], null);
+  };
+
+  const analyzeCharts = async () => {
+    const files = chartFiles.filter(Boolean);
+    if (!files.length) return;
+    setAnalyzingCharts(true);
+    setChartsReasoning(null);
+    try {
+      const fd = new FormData();
+      files.forEach(f => fd.append('screenshots', f));
+      const res = await fetch(`${API}/analyze/charts`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      const e = data.extracted;
+      const keys = ['screenshot_1', 'screenshot_2', 'screenshot_3'];
+      const newScreenshots = {};
+      data.filenames.forEach((fn, i) => { newScreenshots[keys[i]] = fn; });
+      setForm(f => ({
+        ...f,
+        daily_context: e.daily_context || f.daily_context,
+        zone_tests: e.zone_tests ?? f.zone_tests,
+        zone_last_test_days: e.zone_last_test_days ?? f.zone_last_test_days,
+        approach_character: e.approach_character || f.approach_character,
+        h1_slowing: e.h1_slowing ?? f.h1_slowing,
+        h1_wicks: e.h1_wicks ?? f.h1_wicks,
+        h1_stabilization: e.h1_stabilization ?? f.h1_stabilization,
+        h1_rejection: e.h1_rejection ?? f.h1_rejection,
+        ...newScreenshots,
+      }));
+      setChartsReasoning({
+        daily: e.daily_context_reasoning,
+        approach: e.approach_reasoning,
+      });
+    } catch (err) {
+      alert('Analyse fehlgeschlagen: ' + err.message);
+    }
+    setAnalyzingCharts(false);
   };
 
   const handleSubmit = async () => {
-    if (!form.pair || !form.trade_date || !form.direction) return;
+    if (!form.pair || !form.trade_date) return;
     setSaving(true);
     await onSave(form, initial?.id);
     setSaving(false);
@@ -90,9 +166,48 @@ export default function TradeForm({ initial, onSave, onCancel }) {
         {initial ? 'Trade bearbeiten' : 'Neuer Trade'}
       </div>
 
-      {/* ── Basis ─────────────────────────────────────── */}
+      {/* ── cTrader Screenshot ────────────────────────────────────────────── */}
       <section className="form-section">
-        <div className="section-label">Basis</div>
+        <div className="section-label">cTrader Deal Screenshot</div>
+        <div className="ctrader-area">
+          {ctraderPreview ? (
+            <div className="ctrader-preview">
+              <img
+                src={ctraderPreview.startsWith('blob:') ? ctraderPreview : `/uploads/${ctraderPreview}`}
+                alt="cTrader"
+                onClick={() => window.open(ctraderPreview.startsWith('blob:') ? ctraderPreview : `/uploads/${ctraderPreview}`)}
+              />
+              <div className="ctrader-actions">
+                <button
+                  className="btn-primary"
+                  onClick={analyzeCtrader}
+                  disabled={analyzingCtrader || !ctraderFile}
+                >
+                  {analyzingCtrader ? '⏳ Analysiere…' : '🔍 Analysieren'}
+                </button>
+                <button className="btn-secondary" onClick={() => { setCtraderFile(null); setCtraderPreview(null); set('ctrader_screenshot', null); }}>
+                  Entfernen
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="upload-zone" onClick={() => ctraderRef.current.click()}>
+              <span className="upload-icon">📊</span>
+              <span>cTrader Deal Screenshot hochladen</span>
+              <span className="upload-hint">PNG oder JPG · max. 15 MB</span>
+            </div>
+          )}
+          <input ref={ctraderRef} type="file" accept="image/*" style={{ display: 'none' }}
+            onChange={e => e.target.files[0] && handleCtraderFile(e.target.files[0])} />
+        </div>
+      </section>
+
+      {/* ── Basis (vorausgefüllt von cTrader-Analyse) ─────────────────────── */}
+      <section className="form-section">
+        <div className="section-label">
+          Basis
+          {form.ctrader_screenshot && <span className="ai-filled">✓ KI vorausgefüllt</span>}
+        </div>
         <div className="form-row-3">
           <div className="field">
             <label>Datum</label>
@@ -113,11 +228,90 @@ export default function TradeForm({ initial, onSave, onCancel }) {
             </div>
           </div>
         </div>
+        <div className="form-row-4" style={{ marginTop: '0.75rem' }}>
+          <div className="field">
+            <label>Entry-Kurs</label>
+            <input type="number" step="0.00001" placeholder="1.35563" value={form.entry_price} onChange={e => set('entry_price', e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Stop Loss</label>
+            <input type="number" step="0.00001" placeholder="1.35000" value={form.sl_price} onChange={e => set('sl_price', e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Take Profit</label>
+            <input type="number" step="0.00001" placeholder="1.37000" value={form.tp_price} onChange={e => set('tp_price', e.target.value)} />
+          </div>
+          <div className="field">
+            <label>P&L (EUR)</label>
+            <input type="number" step="0.01" placeholder="174.66" value={form.result_eur} onChange={e => set('result_eur', e.target.value)} />
+          </div>
+        </div>
+        <div className="form-row-3" style={{ marginTop: '0.75rem' }}>
+          <div className="field">
+            <label>Status</label>
+            <div className="seg-control">
+              {['OPEN', 'WIN', 'LOSS', 'BE'].map(s => (
+                <button key={s} className={form.result_status === s ? 'active' : ''} onClick={() => set('result_status', s)}>{s}</button>
+              ))}
+            </div>
+          </div>
+          <div className="field">
+            <label>Dauer (Tage)</label>
+            <input type="number" min="0" placeholder="7" value={form.duration_days} onChange={e => set('duration_days', e.target.value)} />
+          </div>
+          <div className="field" />
+        </div>
       </section>
 
-      {/* ── Kontext ───────────────────────────────────── */}
+      {/* ── Chart Screenshots ──────────────────────────────────────────────── */}
       <section className="form-section">
-        <div className="section-label">Daily-Kontext</div>
+        <div className="section-label">Chart Screenshots (H1, D1, optional W1/H4)</div>
+        <div className="chart-uploads">
+          {[0, 1, 2].map(idx => (
+            <div key={idx} className="chart-slot">
+              {chartPreviews[idx] ? (
+                <div className="chart-preview">
+                  <img
+                    src={chartPreviews[idx].startsWith('blob:') ? chartPreviews[idx] : `/uploads/${chartPreviews[idx]}`}
+                    alt={`Chart ${idx + 1}`}
+                    onClick={() => window.open(chartPreviews[idx].startsWith('blob:') ? chartPreviews[idx] : `/uploads/${chartPreviews[idx]}`)}
+                  />
+                  <button className="chart-remove" onClick={() => removeChart(idx)}>✕</button>
+                </div>
+              ) : (
+                <div className="upload-zone small" onClick={() => chartRefs[idx].current.click()}>
+                  <span className="upload-icon">📈</span>
+                  <span>Chart {idx + 1}</span>
+                </div>
+              )}
+              <input ref={chartRefs[idx]} type="file" accept="image/*" style={{ display: 'none' }}
+                onChange={e => e.target.files[0] && handleChartFile(e.target.files[0], idx)} />
+            </div>
+          ))}
+        </div>
+        {chartFiles.some(Boolean) && (
+          <button
+            className="btn-primary analyze-charts-btn"
+            onClick={analyzeCharts}
+            disabled={analyzingCharts}
+          >
+            {analyzingCharts ? '⏳ Analysiere Charts…' : '🔍 Charts analysieren'}
+          </button>
+        )}
+        {chartsReasoning && (
+          <div className="ai-reasoning">
+            <div><span>Kontext:</span> {chartsReasoning.daily}</div>
+            <div><span>Anlauf:</span> {chartsReasoning.approach}</div>
+          </div>
+        )}
+      </section>
+
+      {/* ── Kontext (vorausgefüllt von Chart-Analyse) ─────────────────────── */}
+      <section className="form-section">
+        <div className="section-label">
+          Daily-Kontext & Zone
+          {chartsReasoning && <span className="ai-filled">✓ KI vorausgefüllt</span>}
+        </div>
         <div className="form-row-3">
           <div className="field">
             <label>Marktstruktur</label>
@@ -140,10 +334,11 @@ export default function TradeForm({ initial, onSave, onCancel }) {
         </div>
       </section>
 
-      {/* ── Anlauf ────────────────────────────────────── */}
+      {/* ── Anlauf ────────────────────────────────────────────────────────── */}
       <section className="form-section">
-        <div className="section-label">Anlauf-Charakter zur Zone</div>
-        <div className="field">
+        <div className="section-label">Anlauf-Charakter & H1-Verhalten</div>
+        <div className="field" style={{ marginBottom: '0.75rem' }}>
+          <label>Anlauf zur Zone</label>
           <div className="seg-control approach-seg">
             {[
               { v: 'IMPULSIV', label: '⚡ Impulsiv' },
@@ -156,116 +351,40 @@ export default function TradeForm({ initial, onSave, onCancel }) {
             ))}
           </div>
         </div>
-      </section>
-
-      {/* ── H1-Verhalten ──────────────────────────────── */}
-      <section className="form-section">
-        <div className="section-label">H1-Verhalten an der Zone</div>
-        <div className="checkbox-group">
-          {[
-            { key: 'h1_slowing', label: 'Abbremsen' },
-            { key: 'h1_wicks', label: 'Wicks / Ablehnung' },
-            { key: 'h1_stabilization', label: 'Stabilisierung' },
-            { key: 'h1_rejection', label: 'Rejection Candle' },
-          ].map(({ key, label }) => (
-            <label key={key} className={`checkbox-item ${form[key] ? 'checked' : ''}`} onClick={() => toggle(key)}>
-              <input type="checkbox" checked={form[key]} readOnly />
-              {form[key] ? '✓ ' : ''}{label}
-            </label>
-          ))}
+        <div className="field">
+          <label>H1-Verhalten an der Zone</label>
+          <div className="checkbox-group">
+            {[
+              { key: 'h1_slowing', label: 'Abbremsen' },
+              { key: 'h1_wicks', label: 'Wicks / Ablehnung' },
+              { key: 'h1_stabilization', label: 'Stabilisierung' },
+              { key: 'h1_rejection', label: 'Rejection Candle' },
+            ].map(({ key, label }) => (
+              <label key={key} className={`checkbox-item ${form[key] ? 'checked' : ''}`} onClick={() => toggle(key)}>
+                <input type="checkbox" checked={form[key]} readOnly />
+                {form[key] ? '✓ ' : ''}{label}
+              </label>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ── Entry-Trigger ─────────────────────────────── */}
+      {/* ── Entry-Trigger & Notizen ───────────────────────────────────────── */}
       <section className="form-section">
-        <div className="section-label">Entry</div>
+        <div className="section-label">Entry-Trigger & Notizen</div>
         <div className="field" style={{ marginBottom: '0.75rem' }}>
           <label>Entry-Trigger (was hat dich einsteigen lassen?)</label>
-          <textarea placeholder="z.B. Erste grüne H1-Kerze nach Abbremsen an der Zonenkante, Wick über 0.8615…" value={form.entry_trigger} onChange={e => set('entry_trigger', e.target.value)} />
+          <textarea placeholder="z.B. Erste grüne H1-Kerze nach Abbremsen an der Zonenkante…" value={form.entry_trigger} onChange={e => set('entry_trigger', e.target.value)} />
         </div>
-        <div className="form-row-4">
-          <div className="field">
-            <label>Entry-Kurs</label>
-            <input type="number" step="0.00001" placeholder="0.86200" value={form.entry_price} onChange={e => set('entry_price', e.target.value)} />
-          </div>
-          <div className="field">
-            <label>Stop Loss</label>
-            <input type="number" step="0.00001" placeholder="0.86100" value={form.sl_price} onChange={e => set('sl_price', e.target.value)} />
-          </div>
-          <div className="field">
-            <label>Take Profit</label>
-            <input type="number" step="0.00001" placeholder="0.87200" value={form.tp_price} onChange={e => set('tp_price', e.target.value)} />
-          </div>
-          <div className="field">
-            <label>R:R (errechnet)</label>
-            <div className="computed-field">{rr ? `1 : ${rr}` : '—'}</div>
-          </div>
+        <div className="field">
+          <label>Notizen</label>
+          <textarea placeholder="Weitere Beobachtungen, Lernpunkte, Marktkontext…" value={form.notes} onChange={e => set('notes', e.target.value)} style={{ minHeight: '80px' }} />
         </div>
       </section>
 
-      {/* ── Ergebnis ──────────────────────────────────── */}
-      <section className="form-section">
-        <div className="section-label">Ergebnis</div>
-        <div className="form-row-3">
-          <div className="field">
-            <label>Status</label>
-            <div className="seg-control">
-              {['OPEN', 'WIN', 'LOSS', 'BE'].map(s => (
-                <button key={s} className={form.result_status === s ? 'active' : ''} onClick={() => set('result_status', s)}>{s}</button>
-              ))}
-            </div>
-          </div>
-          <div className="field">
-            <label>P&L (EUR)</label>
-            <input type="number" step="0.01" placeholder="+180.00" value={form.result_eur} onChange={e => set('result_eur', e.target.value)} />
-          </div>
-          <div className="field">
-            <label>Dauer (Tage)</label>
-            <input type="number" min="0" placeholder="7" value={form.duration_days} onChange={e => set('duration_days', e.target.value)} />
-          </div>
-        </div>
-      </section>
-
-      {/* ── Screenshots ───────────────────────────────── */}
-      <section className="form-section">
-        <div className="section-label">Screenshots (max. 2)</div>
-        <div className="screenshot-row">
-          {['s1', 's2'].map((slot, i) => (
-            <div key={slot} className="screenshot-slot">
-              {screenshots[slot] ? (
-                <div className="screenshot-preview">
-                  <img src={`/uploads/${screenshots[slot]}`} alt={`Screenshot ${i + 1}`} />
-                  <button className="screenshot-remove" onClick={() => removeScreenshot(slot)}>✕</button>
-                </div>
-              ) : (
-                <div className="screenshot-upload" onClick={() => (slot === 's1' ? fileRef1 : fileRef2).current.click()}>
-                  <span>+</span>
-                  <span className="upload-label">Screenshot {i + 1}</span>
-                  {uploading && <span className="upload-hint">Lädt…</span>}
-                </div>
-              )}
-              <input
-                ref={slot === 's1' ? fileRef1 : fileRef2}
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={e => e.target.files[0] && uploadFile(e.target.files[0], slot)}
-              />
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Notizen ───────────────────────────────────── */}
-      <section className="form-section">
-        <div className="section-label">Notizen</div>
-        <textarea placeholder="Weitere Beobachtungen, Lernpunkte, Marktkontext…" value={form.notes} onChange={e => set('notes', e.target.value)} style={{ minHeight: '100px' }} />
-      </section>
-
-      {/* ── Actions ───────────────────────────────────── */}
       <div className="form-actions">
         <button className="btn-secondary" onClick={onCancel}>Abbrechen</button>
-        <button className="btn-primary" onClick={handleSubmit} disabled={saving || uploading}>
+        <button className="btn-primary" onClick={handleSubmit} disabled={saving}>
           {saving ? 'Speichert…' : initial ? 'Aktualisieren' : 'Trade speichern'}
         </button>
       </div>
