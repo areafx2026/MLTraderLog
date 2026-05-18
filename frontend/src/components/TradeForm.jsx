@@ -1,273 +1,215 @@
-import { useState, useRef } from 'react';
-import './TradeForm.css';
+import { useState, useEffect, useCallback } from 'react';
+import { FONTS } from '../theme.js';
 
-const API = '/api';
+const MOODS = ['calm', 'focused', 'patient', 'rushed', 'distracted'];
 
-const defaults = {
-  pair: 'EURGBP',
-  trade_date: new Date().toISOString().slice(0, 10),
-  direction: 'LONG',
-  daily_context: 'RANGE',
-  zone_tests: '',
-  zone_last_test_days: '',
-  approach_character: 'IMPULSIV',
-  h1_slowing: false,
-  h1_wicks: false,
-  h1_stabilization: false,
-  h1_rejection: false,
-  entry_trigger: '',
-  entry_price: '',
-  sl_price: '',
-  tp_price: '',
-  result_eur: '',
-  result_status: 'OPEN',
-  duration_days: '',
-  notes: '',
-  screenshot_1: null,
-  screenshot_2: null,
-};
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+function nowTime() {
+  return new Date().toTimeString().slice(0, 5);
+}
 
-const PAIRS = ['EURGBP', 'GBPNZD', 'GBPAUD', 'EURCAD', 'EURJPY', 'GBPJPY', 'CADJPY', 'USDCAD', 'WTI', 'ANDERE'];
+export default function TradeForm({ t, trade, onSave, onCancel }) {
+  const isEdit = !!trade;
 
-export default function TradeForm({ initial, onSave, onCancel }) {
-  const [form, setForm] = useState(initial ? {
-    ...defaults,
-    ...initial,
-    trade_date: initial.trade_date ? initial.trade_date.slice(0, 10) : defaults.trade_date,
-  } : defaults);
-
-  const [screenshots, setScreenshots] = useState({
-    s1: initial?.screenshot_1 || null,
-    s2: initial?.screenshot_2 || null,
+  const [form, setForm] = useState({
+    pair: '',
+    side: 'Long',
+    date: today(),
+    time: nowTime(),
+    entry: '',
+    exit: '',
+    stop: '',
+    size: '',
+    tag: '',
+    mood: 'calm',
+    note: '',
+    result_eur: '',
   });
-  const [uploading, setUploading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const fileRef1 = useRef();
-  const fileRef2 = useRef();
 
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-  const toggle = (k) => setForm(f => ({ ...f, [k]: !f[k] }));
+  useEffect(() => {
+    if (trade) {
+      setForm({
+        pair: trade.pair || '',
+        side: trade.side ? trade.side.charAt(0).toUpperCase() + trade.side.slice(1) : 'Long',
+        date: trade.date || today(),
+        time: trade.time || nowTime(),
+        entry: trade.entry ? String(trade.entry) : '',
+        exit: trade.exit ? String(trade.exit) : '',
+        stop: trade.sl ? String(trade.sl) : '',
+        size: trade.size ? String(trade.size) : '',
+        tag: trade.tag || '',
+        mood: trade.mood || 'calm',
+        note: trade.note || '',
+        result_eur: trade.pl !== undefined ? String(trade.pl) : '',
+      });
+    }
+  }, [trade]);
 
-  // Computed R:R
-  const rr = (() => {
-    const e = parseFloat(form.entry_price);
-    const sl = parseFloat(form.sl_price);
-    const tp = parseFloat(form.tp_price);
-    if (!e || !sl || !tp) return null;
-    const risk = Math.abs(e - sl);
-    const reward = Math.abs(tp - e);
-    if (!risk) return null;
-    return (reward / risk).toFixed(2);
-  })();
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
-  const uploadFile = async (file, slot) => {
-    setUploading(true);
-    const fd = new FormData();
-    fd.append('screenshots', file);
-    const res = await fetch(`${API}/upload`, { method: 'POST', body: fd });
-    const data = await res.json();
-    const filename = data.files[0];
-    setScreenshots(s => ({ ...s, [slot]: filename }));
-    set(slot === 's1' ? 'screenshot_1' : 'screenshot_2', filename);
-    setUploading(false);
-  };
+  const handleSave = useCallback(() => {
+    if (!form.pair.trim() || !form.date || !form.side) return;
+    onSave({
+      id: trade?.id,
+      pair: form.pair.trim().replace(/\s/g, '').toUpperCase().replace(/([A-Z]{3})([A-Z]{3})/, '$1/$2'),
+      direction: form.side.toUpperCase(),
+      trade_date: form.date,
+      trade_time: form.time || null,
+      entry_price: form.entry || null,
+      exit_price: form.exit || null,
+      sl_price: form.stop || null,
+      lot_size: form.size || null,
+      tag: form.tag || null,
+      mood: form.mood || null,
+      notes: form.note || null,
+      result_eur: form.result_eur !== '' ? form.result_eur : null,
+    });
+  }, [form, trade, onSave]);
 
-  const removeScreenshot = (slot) => {
-    setScreenshots(s => ({ ...s, [slot]: null }));
-    set(slot === 's1' ? 'screenshot_1' : 'screenshot_2', null);
-  };
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') handleSave();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [handleSave]);
 
-  const handleSubmit = async () => {
-    if (!form.pair || !form.trade_date || !form.direction) return;
-    setSaving(true);
-    await onSave(form, initial?.id);
-    setSaving(false);
-  };
+  const Field = ({ k, label, sub, placeholder = '' }) => (
+    <div style={{ borderBottom: `1px solid ${t.rule2}`, paddingBottom: 14 }}>
+      <div style={{
+        fontFamily: FONTS.serif, fontStyle: 'italic', fontSize: 12,
+        color: t.ink2, marginBottom: 8, letterSpacing: 0.2,
+      }}>{label}</div>
+      <input
+        value={form[k]}
+        onChange={(e) => set(k, e.target.value)}
+        placeholder={placeholder || 'add'}
+        style={{
+          background: 'transparent', border: 'none', outline: 'none',
+          fontFamily: FONTS.serif, fontSize: 26, letterSpacing: -0.3, width: '100%', padding: 0,
+          color: form[k] ? t.ink : t.ink3,
+          fontStyle: form[k] ? 'normal' : 'italic',
+        }}
+      />
+      {sub && <div style={{ fontSize: 11, color: t.ink3, marginTop: 4 }}>{sub}</div>}
+    </div>
+  );
+
+  const SelectField = ({ k, label, options }) => (
+    <div style={{ borderBottom: `1px solid ${t.rule2}`, paddingBottom: 14 }}>
+      <div style={{
+        fontFamily: FONTS.serif, fontStyle: 'italic', fontSize: 12,
+        color: t.ink2, marginBottom: 8, letterSpacing: 0.2,
+      }}>{label}</div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {options.map((o) => {
+          const on = form[k].toLowerCase() === o.toLowerCase();
+          return (
+            <button key={o} onClick={() => set(k, o)}
+              style={{
+                padding: '4px 12px', borderRadius: 999, fontSize: 13,
+                fontFamily: FONTS.sans, cursor: 'pointer', border: `1px solid ${on ? t.ink : t.rule2}`,
+                background: on ? t.ink : 'transparent',
+                color: on ? t.inkInk : t.ink2,
+                textTransform: 'capitalize',
+              }}>{o}</button>
+          );
+        })}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="trade-form">
-      <div className="form-title">
-        {initial ? 'Trade bearbeiten' : 'Neuer Trade'}
+    <div style={{
+      flex: 1, padding: '40px 72px', overflow: 'auto', minWidth: 0,
+      display: 'flex', flexDirection: 'column',
+    }}>
+      <button onClick={onCancel}
+        style={{
+          background: 'transparent', border: 'none', cursor: 'pointer',
+          fontSize: 13, color: t.ink3, padding: 0, marginBottom: 18,
+          fontFamily: FONTS.sans, alignSelf: 'flex-start',
+        }}>
+        ← Trades
+      </button>
+
+      <h1 style={{
+        fontFamily: FONTS.serif, fontWeight: 400, fontSize: 44,
+        margin: '0 0 6px', letterSpacing: -0.8, color: t.ink,
+      }}>
+        {isEdit ? 'Edit trade.' : 'A new trade.'}
+      </h1>
+      <p style={{
+        fontFamily: FONTS.serif, fontStyle: 'italic', color: t.ink2,
+        fontSize: 16, margin: '0 0 36px',
+      }}>
+        {isEdit ? 'Update the details below.' : 'Tell me about it.'}
+      </p>
+
+      <div style={{
+        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '28px 64px', maxWidth: 820,
+      }}>
+        <Field k="pair"  label="Pair" placeholder="EUR/USD" />
+        <SelectField k="side" label="Direction" options={['Long', 'Short']} />
+        <Field k="date"  label="Date" />
+        <Field k="time"  label="Time" placeholder="09:42" />
+        <Field k="entry" label="Entry" placeholder="1.0842" />
+        <Field k="exit"  label="Exit"  placeholder="1.0901" sub="leave blank if still open" />
+        <Field k="stop"  label="Stop"  placeholder="1.0820" />
+        <Field k="size"  label="Size"  placeholder="1.50" sub="in lots" />
+        <Field k="tag"   label="Setup" placeholder="London breakout" />
+        <SelectField k="mood" label="Mood" options={MOODS} />
+        <Field k="result_eur" label="Result ($)" placeholder="optional — computed from entry/exit if blank" />
       </div>
 
-      {/* ── Basis ─────────────────────────────────────── */}
-      <section className="form-section">
-        <div className="section-label">Basis</div>
-        <div className="form-row-3">
-          <div className="field">
-            <label>Datum</label>
-            <input type="date" value={form.trade_date} onChange={e => set('trade_date', e.target.value)} />
-          </div>
-          <div className="field">
-            <label>Pair</label>
-            <select value={form.pair} onChange={e => set('pair', e.target.value)}>
-              {PAIRS.map(p => <option key={p}>{p}</option>)}
-            </select>
-          </div>
-          <div className="field">
-            <label>Richtung</label>
-            <div className="seg-control">
-              {['LONG', 'SHORT'].map(d => (
-                <button key={d} className={form.direction === d ? 'active' : ''} onClick={() => set('direction', d)}>{d}</button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      <div style={{
+        marginTop: 28, paddingTop: 24, borderTop: `1px solid ${t.rule2}`, maxWidth: 820,
+      }}>
+        <div style={{
+          fontFamily: FONTS.serif, fontStyle: 'italic', fontSize: 12,
+          color: t.ink2, marginBottom: 12, letterSpacing: 0.2,
+        }}>A few notes</div>
+        <textarea
+          value={form.note}
+          onChange={(e) => set('note', e.target.value)}
+          placeholder="What were you watching? How did it feel?…"
+          rows={4}
+          style={{
+            background: 'transparent', border: 'none', outline: 'none',
+            fontFamily: FONTS.serif, fontSize: 19, lineHeight: 1.6, width: '100%',
+            resize: 'none', padding: 0,
+            color: form.note ? t.ink : t.ink3,
+            fontStyle: form.note ? 'normal' : 'italic',
+          }}
+        />
+      </div>
 
-      {/* ── Kontext ───────────────────────────────────── */}
-      <section className="form-section">
-        <div className="section-label">Daily-Kontext</div>
-        <div className="form-row-3">
-          <div className="field">
-            <label>Marktstruktur</label>
-            <div className="seg-control">
-              {['RANGE', 'UPTREND', 'DOWNTREND'].map(c => (
-                <button key={c} className={form.daily_context === c ? 'active' : ''} onClick={() => set('daily_context', c)}>
-                  {c === 'RANGE' ? 'Range' : c === 'UPTREND' ? '↑ Up' : '↓ Down'}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="field">
-            <label>Zone — Anzahl Tests</label>
-            <input type="number" min="1" max="20" placeholder="z.B. 3" value={form.zone_tests} onChange={e => set('zone_tests', e.target.value)} />
-          </div>
-          <div className="field">
-            <label>Letzter Test (vor X Tagen)</label>
-            <input type="number" min="1" placeholder="z.B. 14" value={form.zone_last_test_days} onChange={e => set('zone_last_test_days', e.target.value)} />
-          </div>
-        </div>
-      </section>
-
-      {/* ── Anlauf ────────────────────────────────────── */}
-      <section className="form-section">
-        <div className="section-label">Anlauf-Charakter zur Zone</div>
-        <div className="field">
-          <div className="seg-control approach-seg">
-            {[
-              { v: 'IMPULSIV', label: '⚡ Impulsiv' },
-              { v: 'MEANDERND', label: '〜 Meandernd' },
-              { v: 'LANGSAM', label: '● Langsam' },
-            ].map(({ v, label }) => (
-              <button key={v} className={form.approach_character === v ? 'active' : ''} onClick={() => set('approach_character', v)}>
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── H1-Verhalten ──────────────────────────────── */}
-      <section className="form-section">
-        <div className="section-label">H1-Verhalten an der Zone</div>
-        <div className="checkbox-group">
-          {[
-            { key: 'h1_slowing', label: 'Abbremsen' },
-            { key: 'h1_wicks', label: 'Wicks / Ablehnung' },
-            { key: 'h1_stabilization', label: 'Stabilisierung' },
-            { key: 'h1_rejection', label: 'Rejection Candle' },
-          ].map(({ key, label }) => (
-            <label key={key} className={`checkbox-item ${form[key] ? 'checked' : ''}`} onClick={() => toggle(key)}>
-              <input type="checkbox" checked={form[key]} readOnly />
-              {form[key] ? '✓ ' : ''}{label}
-            </label>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Entry-Trigger ─────────────────────────────── */}
-      <section className="form-section">
-        <div className="section-label">Entry</div>
-        <div className="field" style={{ marginBottom: '0.75rem' }}>
-          <label>Entry-Trigger (was hat dich einsteigen lassen?)</label>
-          <textarea placeholder="z.B. Erste grüne H1-Kerze nach Abbremsen an der Zonenkante, Wick über 0.8615…" value={form.entry_trigger} onChange={e => set('entry_trigger', e.target.value)} />
-        </div>
-        <div className="form-row-4">
-          <div className="field">
-            <label>Entry-Kurs</label>
-            <input type="number" step="0.00001" placeholder="0.86200" value={form.entry_price} onChange={e => set('entry_price', e.target.value)} />
-          </div>
-          <div className="field">
-            <label>Stop Loss</label>
-            <input type="number" step="0.00001" placeholder="0.86100" value={form.sl_price} onChange={e => set('sl_price', e.target.value)} />
-          </div>
-          <div className="field">
-            <label>Take Profit</label>
-            <input type="number" step="0.00001" placeholder="0.87200" value={form.tp_price} onChange={e => set('tp_price', e.target.value)} />
-          </div>
-          <div className="field">
-            <label>R:R (errechnet)</label>
-            <div className="computed-field">{rr ? `1 : ${rr}` : '—'}</div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Ergebnis ──────────────────────────────────── */}
-      <section className="form-section">
-        <div className="section-label">Ergebnis</div>
-        <div className="form-row-3">
-          <div className="field">
-            <label>Status</label>
-            <div className="seg-control">
-              {['OPEN', 'WIN', 'LOSS', 'BE'].map(s => (
-                <button key={s} className={form.result_status === s ? 'active' : ''} onClick={() => set('result_status', s)}>{s}</button>
-              ))}
-            </div>
-          </div>
-          <div className="field">
-            <label>P&L (EUR)</label>
-            <input type="number" step="0.01" placeholder="+180.00" value={form.result_eur} onChange={e => set('result_eur', e.target.value)} />
-          </div>
-          <div className="field">
-            <label>Dauer (Tage)</label>
-            <input type="number" min="0" placeholder="7" value={form.duration_days} onChange={e => set('duration_days', e.target.value)} />
-          </div>
-        </div>
-      </section>
-
-      {/* ── Screenshots ───────────────────────────────── */}
-      <section className="form-section">
-        <div className="section-label">Screenshots (max. 2)</div>
-        <div className="screenshot-row">
-          {['s1', 's2'].map((slot, i) => (
-            <div key={slot} className="screenshot-slot">
-              {screenshots[slot] ? (
-                <div className="screenshot-preview">
-                  <img src={`/uploads/${screenshots[slot]}`} alt={`Screenshot ${i + 1}`} />
-                  <button className="screenshot-remove" onClick={() => removeScreenshot(slot)}>✕</button>
-                </div>
-              ) : (
-                <div className="screenshot-upload" onClick={() => (slot === 's1' ? fileRef1 : fileRef2).current.click()}>
-                  <span>+</span>
-                  <span className="upload-label">Screenshot {i + 1}</span>
-                  {uploading && <span className="upload-hint">Lädt…</span>}
-                </div>
-              )}
-              <input
-                ref={slot === 's1' ? fileRef1 : fileRef2}
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={e => e.target.files[0] && uploadFile(e.target.files[0], slot)}
-              />
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Notizen ───────────────────────────────────── */}
-      <section className="form-section">
-        <div className="section-label">Notizen</div>
-        <textarea placeholder="Weitere Beobachtungen, Lernpunkte, Marktkontext…" value={form.notes} onChange={e => set('notes', e.target.value)} style={{ minHeight: '100px' }} />
-      </section>
-
-      {/* ── Actions ───────────────────────────────────── */}
-      <div className="form-actions">
-        <button className="btn-secondary" onClick={onCancel}>Abbrechen</button>
-        <button className="btn-primary" onClick={handleSubmit} disabled={saving || uploading}>
-          {saving ? 'Speichert…' : initial ? 'Aktualisieren' : 'Trade speichern'}
+      <div style={{
+        marginTop: 'auto', display: 'flex', gap: 12, paddingTop: 28, alignItems: 'center',
+      }}>
+        <button onClick={handleSave}
+          style={{
+            background: t.ink, color: t.inkInk, border: 'none',
+            padding: '12px 22px', borderRadius: 999, fontFamily: FONTS.sans,
+            fontWeight: 500, fontSize: 14, cursor: 'pointer',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}>
+          {isEdit ? 'Update trade' : 'Save trade'}
         </button>
+        <button onClick={onCancel}
+          style={{
+            background: 'transparent', color: t.ink2, border: 'none',
+            padding: '12px 16px', fontFamily: FONTS.sans, fontSize: 14, cursor: 'pointer',
+          }}>
+          Cancel
+        </button>
+        <span style={{
+          marginLeft: 'auto', fontSize: 11, color: t.ink3,
+          fontFamily: FONTS.serif, fontStyle: 'italic',
+        }}>⌘↵ to save</span>
       </div>
     </div>
   );

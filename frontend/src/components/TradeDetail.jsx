@@ -1,101 +1,194 @@
-import './TradeDetail.css';
+import { FONTS } from '../theme.js';
+import { usd } from '../chartUtils.js';
 
-const fmt = (n) => n != null ? (n >= 0 ? '+' : '') + Number(n).toFixed(2) + ' €' : '—';
-const fmtDate = (d) => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
-const fmtPrice = (p) => p != null ? Number(p).toFixed(5) : '—';
+function TradeSchematicChart({ t, trade, height = 220 }) {
+  const W = 760, H = height;
+  if (!trade.exit || trade.status === 'OPEN') {
+    return (
+      <div style={{
+        height: H, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: FONTS.serif, fontStyle: 'italic', fontSize: 14, color: t.ink3,
+      }}>
+        Trade still open — no exit yet.
+      </div>
+    );
+  }
 
-export default function TradeDetail({ trade: t, onEdit, onDelete, onBack }) {
-  const rr = (() => {
-    const e = parseFloat(t.entry_price);
-    const sl = parseFloat(t.sl_price);
-    const tp = parseFloat(t.tp_price);
-    if (!e || !sl || !tp) return null;
-    const risk = Math.abs(e - sl);
-    const reward = Math.abs(tp - e);
-    if (!risk) return null;
-    return (reward / risk).toFixed(2);
-  })();
+  const isJpy = (trade.pair || '').includes('JPY');
+  const isWin = trade.pl > 0;
+  const lineColor = isWin ? t.win : t.loss;
 
-  const h1checks = [
-    { key: 'h1_slowing', label: 'Abbremsen' },
-    { key: 'h1_wicks', label: 'Wicks / Ablehnung' },
-    { key: 'h1_stabilization', label: 'Stabilisierung' },
-    { key: 'h1_rejection', label: 'Rejection Candle' },
+  const entryY_pct = isWin ? 0.7 : 0.3;
+  const exitY_pct  = isWin ? 0.2 : 0.8;
+  const entryX = W * 0.28, exitX = W * 0.72;
+  const pad = 16;
+
+  const points = [
+    [pad, H * entryY_pct + (Math.random() - 0.5) * 20],
+    [entryX * 0.6, H * entryY_pct + (Math.random() - 0.5) * 10],
+    [entryX, H * entryY_pct],
+    [W * 0.5, H * (entryY_pct + exitY_pct) / 2 + (Math.random() - 0.5) * 15],
+    [exitX, H * exitY_pct],
+    [W - pad, H * exitY_pct + (Math.random() - 0.5) * 10],
+  ];
+  const pathD = points.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+
+  const fmt = (p) => p ? p.toFixed(isJpy ? 2 : 4) : '';
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none">
+      {[0.25, 0.5, 0.75].map((p) => (
+        <line key={p} x1={0} x2={W} y1={H * p} y2={H * p} stroke={t.rule} strokeDasharray="2 5" />
+      ))}
+      <line x1={entryX} x2={entryX} y1={0} y2={H} stroke={t.ink3} strokeDasharray="3 3" strokeWidth="0.8" />
+      <line x1={exitX}  x2={exitX}  y1={0} y2={H} stroke={lineColor} strokeDasharray="3 3" strokeWidth="0.8" opacity="0.7" />
+      <path d={pathD} fill="none" stroke={lineColor} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+      <text x={entryX + 6} y={20} fill={t.ink2} fontSize="11" fontFamily={FONTS.serif} fontStyle="italic">
+        entry {fmt(trade.entry)}
+      </text>
+      <text x={exitX + 6} y={20} fill={lineColor} fontSize="11" fontFamily={FONTS.serif} fontStyle="italic">
+        exit {fmt(trade.exit)}
+      </text>
+    </svg>
+  );
+}
+
+export default function TradeDetail({ t, trade, onBack, onEdit, onDelete }) {
+  if (!trade) {
+    return (
+      <div style={{ flex: 1, padding: '40px 72px', color: t.ink3, fontFamily: FONTS.serif, fontStyle: 'italic' }}>
+        Trade not found.
+      </div>
+    );
+  }
+
+  const isWin = trade.pl > 0;
+  const isLoss = trade.pl < 0;
+  const plColor = trade.pl === 0 ? t.ink3 : isWin ? t.win : t.loss;
+  const plText = trade.pl === 0 ? '—'
+    : isWin ? `+$${usd(trade.pl)}` : `–$${usd(Math.abs(trade.pl))}`;
+
+  const rows = [
+    ['Setup',      trade.tag || '—'],
+    ['Direction',  `${trade.side.charAt(0).toUpperCase() + trade.side.slice(1)}${trade.size ? ' · ' + trade.size + ' lots' : ''}`],
+    ['Entry',      trade.entry ? trade.entry.toFixed((trade.pair || '').includes('JPY') ? 2 : 4) : '—'],
+    ['Exit',       trade.exit  ? trade.exit.toFixed((trade.pair || '').includes('JPY') ? 2 : 4) : 'open'],
+    ['Stop',       trade.sl ? trade.sl.toFixed((trade.pair || '').includes('JPY') ? 2 : 4) : '—'],
+    ['R-multiple', trade.rr ? `${trade.rr > 0 ? '+' : ''}${trade.rr} R` : '—'],
+    ['Mood',       trade.mood ? trade.mood.charAt(0).toUpperCase() + trade.mood.slice(1) : '—'],
+    ['Status',     trade.status || '—'],
   ];
 
   return (
-    <div className="trade-detail">
-      <div className="detail-topbar">
-        <button className="btn-secondary back-btn" onClick={onBack}>← Zurück</button>
-        <div className="detail-actions">
-          <button className="btn-secondary" onClick={() => onEdit(t)}>Bearbeiten</button>
-          <button className="btn-danger" onClick={() => onDelete(t.id)}>Löschen</button>
+    <div style={{ flex: 1, padding: '40px 72px', overflow: 'auto', minWidth: 0 }}>
+      {/* back + actions */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+        <button onClick={onBack}
+          style={{
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            fontSize: 13, color: t.ink3, padding: 0, fontFamily: FONTS.sans,
+          }}>
+          ← Trades
+        </button>
+        <div style={{ display: 'flex', gap: 16 }}>
+          <button onClick={() => onEdit(trade)}
+            style={{
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              fontSize: 13, color: t.ink2, fontFamily: FONTS.sans,
+            }}>
+            Edit
+          </button>
+          <button onClick={() => onDelete(trade.id)}
+            style={{
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              fontSize: 13, color: t.loss, fontFamily: FONTS.sans, opacity: 0.7,
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.7')}>
+            Delete
+          </button>
         </div>
       </div>
 
-      <div className="detail-header">
-        <div className="detail-pair">{t.pair}</div>
-        <span className={`badge badge-${t.direction}`}>{t.direction}</span>
-        <span className={`badge badge-${t.result_status}`}>{t.result_status}</span>
-        <div className={`detail-pnl mono ${t.result_eur > 0 ? 'pnl-pos' : t.result_eur < 0 ? 'pnl-neg' : 'pnl-zero'}`}>
-          {fmt(t.result_eur)}
+      {/* header */}
+      <header style={{
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
+        paddingBottom: 22, marginBottom: 28, borderBottom: `1px solid ${t.rule2}`, gap: 24,
+      }}>
+        <div>
+          <div style={{
+            fontFamily: FONTS.serif, fontStyle: 'italic', color: t.ink2,
+            fontSize: 14, marginBottom: 6,
+          }}>
+            Trade #{trade.id} · {trade.date.slice(5)}{trade.time && trade.time !== '00:00' ? ', ' + trade.time : ''}
+          </div>
+          <h1 style={{
+            fontFamily: FONTS.serif, fontWeight: 400, fontSize: 48, margin: 0,
+            letterSpacing: -0.8, lineHeight: 1, color: t.ink,
+          }}>
+            {trade.pair}{' '}
+            <span style={{ fontStyle: 'italic', color: t.ink2 }}>{trade.side}</span>
+          </h1>
         </div>
-        <div className="detail-date mono">{fmtDate(t.trade_date)}{t.duration_days ? ` · ${t.duration_days} Tage` : ''}</div>
-      </div>
-
-      <div className="detail-grid">
-        <div className="detail-card">
-          <div className="card-title">Kontext</div>
-          <div className="card-row"><span>Marktstruktur</span><span>{t.daily_context}</span></div>
-          <div className="card-row"><span>Anlauf</span><span>{t.approach_character}</span></div>
-          <div className="card-row"><span>Zone Tests</span><span>{t.zone_tests ?? '—'}</span></div>
-          <div className="card-row"><span>Letzter Test</span><span>{t.zone_last_test_days ? `vor ${t.zone_last_test_days} Tagen` : '—'}</span></div>
-        </div>
-
-        <div className="detail-card">
-          <div className="card-title">H1-Verhalten</div>
-          <div className="h1-checks">
-            {h1checks.map(({ key, label }) => (
-              <div key={key} className={`h1-check ${t[key] ? 'active' : ''}`}>
-                <span>{t[key] ? '✓' : '○'}</span>
-                <span>{label}</span>
-              </div>
-            ))}
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <div style={{
+            fontFamily: FONTS.serif, fontWeight: 500, fontSize: 44,
+            color: plColor, letterSpacing: -0.5, lineHeight: 1,
+          }}>
+            {plText}
+          </div>
+          <div style={{ fontSize: 13, color: t.ink2, marginTop: 6 }}>
+            {trade.pips ? `${trade.pips > 0 ? '+' : ''}${trade.pips} pips` : ''}
+            {trade.rr ? ` · ${trade.rr}R` : ''}
+            {trade.size ? ` · ${trade.size} lots` : ''}
           </div>
         </div>
+      </header>
 
-        <div className="detail-card">
-          <div className="card-title">Levels</div>
-          <div className="card-row"><span>Entry</span><span className="mono">{fmtPrice(t.entry_price)}</span></div>
-          <div className="card-row"><span>Stop Loss</span><span className="mono" style={{color:'var(--loss)'}}>{fmtPrice(t.sl_price)}</span></div>
-          <div className="card-row"><span>Take Profit</span><span className="mono" style={{color:'var(--win)'}}>{fmtPrice(t.tp_price)}</span></div>
-          <div className="card-row"><span>R:R</span><span className="mono" style={{color:'var(--accent)'}}>{rr ? `1 : ${rr}` : '—'}</span></div>
-        </div>
-      </div>
-
-      {t.entry_trigger && (
-        <div className="detail-card detail-card-full">
-          <div className="card-title">Entry-Trigger</div>
-          <p className="detail-text">{t.entry_trigger}</p>
-        </div>
-      )}
-
-      {t.notes && (
-        <div className="detail-card detail-card-full">
-          <div className="card-title">Notizen</div>
-          <p className="detail-text">{t.notes}</p>
-        </div>
-      )}
-
-      {(t.screenshot_1 || t.screenshot_2) && (
-        <div className="detail-card detail-card-full">
-          <div className="card-title">Screenshots</div>
-          <div className="detail-screenshots">
-            {t.screenshot_1 && <img src={`/uploads/${t.screenshot_1}`} alt="Screenshot 1" onClick={() => window.open(`/uploads/${t.screenshot_1}`)} />}
-            {t.screenshot_2 && <img src={`/uploads/${t.screenshot_2}`} alt="Screenshot 2" onClick={() => window.open(`/uploads/${t.screenshot_2}`)} />}
+      {/* body */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 48 }}>
+        <div>
+          <div style={{
+            background: t.paper, border: `1px solid ${t.rule}`,
+            borderRadius: 4, padding: 24, marginBottom: 24,
+          }}>
+            <TradeSchematicChart t={t} trade={trade} height={220} />
           </div>
+
+          {trade.note && (
+            <div>
+              <div style={{
+                fontFamily: FONTS.serif, fontStyle: 'italic', fontSize: 14,
+                color: t.ink2, marginBottom: 12,
+              }}>Reflection</div>
+              <p style={{
+                fontFamily: FONTS.serif, fontSize: 19, lineHeight: 1.6, margin: 0,
+                color: t.ink, maxWidth: '60ch',
+              }}>
+                {trade.note}
+              </p>
+            </div>
+          )}
         </div>
-      )}
+
+        <aside style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+          {rows.map(([k, v]) => (
+            <div key={k} style={{
+              display: 'flex', justifyContent: 'space-between',
+              borderBottom: `1px solid ${t.rule}`, paddingBottom: 10, gap: 12,
+            }}>
+              <span style={{
+                color: t.ink2, fontFamily: FONTS.serif, fontStyle: 'italic',
+                fontSize: 13, whiteSpace: 'nowrap',
+              }}>{k}</span>
+              <span style={{
+                color: t.ink, fontFamily: FONTS.serif, fontWeight: 500,
+                fontSize: 13, whiteSpace: 'nowrap', textAlign: 'right',
+              }}>{v}</span>
+            </div>
+          ))}
+        </aside>
+      </div>
     </div>
   );
 }

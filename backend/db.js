@@ -16,48 +16,77 @@ const initDb = async () => {
         id SERIAL PRIMARY KEY,
         created_at TIMESTAMPTZ DEFAULT NOW(),
 
-        -- Basis
         pair VARCHAR(20) NOT NULL,
         trade_date DATE NOT NULL,
         direction VARCHAR(10) NOT NULL CHECK (direction IN ('LONG', 'SHORT')),
 
-        -- Kontext
-        daily_context VARCHAR(20) NOT NULL CHECK (daily_context IN ('RANGE', 'UPTREND', 'DOWNTREND')),
+        daily_context VARCHAR(20) CHECK (daily_context IN ('RANGE', 'UPTREND', 'DOWNTREND')),
         zone_tests INTEGER,
         zone_last_test_days INTEGER,
+        approach_character VARCHAR(20) CHECK (approach_character IN ('IMPULSIV', 'MEANDERND', 'LANGSAM')),
 
-        -- Anlauf-Charakter
-        approach_character VARCHAR(20) NOT NULL CHECK (approach_character IN ('IMPULSIV', 'MEANDERND', 'LANGSAM')),
-
-        -- H1-Verhalten an der Zone (Checkboxen)
         h1_slowing BOOLEAN DEFAULT FALSE,
         h1_wicks BOOLEAN DEFAULT FALSE,
         h1_stabilization BOOLEAN DEFAULT FALSE,
         h1_rejection BOOLEAN DEFAULT FALSE,
 
-        -- Entry-Details
         entry_trigger TEXT,
         entry_price NUMERIC(12, 5),
         sl_price NUMERIC(12, 5),
         tp_price NUMERIC(12, 5),
 
-        -- Ergebnis
         result_eur NUMERIC(10, 2),
         result_status VARCHAR(20) CHECK (result_status IN ('WIN', 'LOSS', 'BE', 'OPEN')),
         duration_days INTEGER,
 
-        -- Screenshots
         screenshot_1 VARCHAR(255),
         screenshot_2 VARCHAR(255),
-
-        -- Notizen
         notes TEXT
       );
     `);
+
+    // New columns for ForexLog — safe to run on existing schema
+    const newCols = [
+      `ALTER TABLE trades ADD COLUMN IF NOT EXISTS trade_time VARCHAR(5)`,
+      `ALTER TABLE trades ADD COLUMN IF NOT EXISTS exit_price NUMERIC(12, 5)`,
+      `ALTER TABLE trades ADD COLUMN IF NOT EXISTS lot_size NUMERIC(10, 2)`,
+      `ALTER TABLE trades ADD COLUMN IF NOT EXISTS pips NUMERIC(10, 1)`,
+      `ALTER TABLE trades ADD COLUMN IF NOT EXISTS rr_multiple NUMERIC(6, 2)`,
+      `ALTER TABLE trades ADD COLUMN IF NOT EXISTS mood VARCHAR(20)`,
+      `ALTER TABLE trades ADD COLUMN IF NOT EXISTS tag VARCHAR(100)`,
+    ];
+    for (const sql of newCols) {
+      await client.query(sql);
+    }
+
     console.log('Database initialized');
   } finally {
     client.release();
   }
 };
 
-module.exports = { pool, initDb };
+function mapTrade(row) {
+  const pl = Math.round(parseFloat(row.result_eur) || 0);
+  return {
+    id: String(row.id).padStart(4, '0'),
+    date: row.trade_date instanceof Date
+      ? row.trade_date.toISOString().slice(0, 10)
+      : String(row.trade_date).slice(0, 10),
+    time: row.trade_time || '00:00',
+    pair: row.pair,
+    side: (row.direction || 'LONG').toLowerCase(),
+    entry: parseFloat(row.entry_price) || 0,
+    exit: parseFloat(row.exit_price) || parseFloat(row.tp_price) || 0,
+    sl: parseFloat(row.sl_price) || 0,
+    size: parseFloat(row.lot_size) || 1.0,
+    pl,
+    pips: parseFloat(row.pips) || 0,
+    rr: parseFloat(row.rr_multiple) || 0,
+    tag: row.tag || row.entry_trigger || '',
+    mood: row.mood || 'calm',
+    note: row.notes || '',
+    status: row.result_status || 'OPEN',
+  };
+}
+
+module.exports = { pool, initDb, mapTrade };
