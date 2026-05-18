@@ -1,20 +1,22 @@
+version: '3.8'
+
 services:
   db:
     image: postgres:16-alpine
-    container_name: mltraderlog_db
+    container_name: forexlog_db
     restart: unless-stopped
     environment:
       POSTGRES_DB: mltraderlog
       POSTGRES_USER: mltrader
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - mltraderlog_db_data:/var/lib/postgresql/data
+      - forexlog_db_data:/var/lib/postgresql/data
     networks:
-      - mltraderlog_net
+      - forexlog_net
 
   backend:
     build: ./backend
-    container_name: mltraderlog_backend
+    container_name: forexlog_backend
     restart: unless-stopped
     ports:
       - "3002:3002"
@@ -25,29 +27,28 @@ services:
       DB_NAME: mltraderlog
       DB_USER: mltrader
       DB_PASSWORD: ${DB_PASSWORD}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
     volumes:
-      - mltraderlog_uploads:/app/uploads
+      - forexlog_uploads:/app/uploads
     depends_on:
       - db
     networks:
-      - mltraderlog_net
+      - forexlog_net
 
   frontend:
     build: ./frontend
-    container_name: mltraderlog_frontend
+    container_name: forexlog_frontend
     restart: unless-stopped
     ports:
       - "8082:80"
     depends_on:
       - backend
     networks:
-      - mltraderlog_net
+      - forexlog_net
 
 volumes:
-  mltraderlog_db_data:
-  mltraderlog_uploads:
+  forexlog_db_data:
+  forexlog_uploads:
 
 networks:
-  mltraderlog_net:
+  forexlog_net:
     driver: bridge
