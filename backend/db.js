@@ -46,7 +46,7 @@ const initDb = async () => {
     `);
 
     // New columns for ForexLog — safe to run on existing schema
-    const newCols = [
+    const migrations = [
       `ALTER TABLE trades ADD COLUMN IF NOT EXISTS trade_time VARCHAR(5)`,
       `ALTER TABLE trades ADD COLUMN IF NOT EXISTS exit_price NUMERIC(12, 5)`,
       `ALTER TABLE trades ADD COLUMN IF NOT EXISTS lot_size NUMERIC(10, 2)`,
@@ -54,8 +54,10 @@ const initDb = async () => {
       `ALTER TABLE trades ADD COLUMN IF NOT EXISTS rr_multiple NUMERIC(6, 2)`,
       `ALTER TABLE trades ADD COLUMN IF NOT EXISTS mood VARCHAR(20)`,
       `ALTER TABLE trades ADD COLUMN IF NOT EXISTS tag VARCHAR(100)`,
+      `ALTER TABLE trades ALTER COLUMN daily_context DROP NOT NULL`,
+      `ALTER TABLE trades ALTER COLUMN approach_character DROP NOT NULL`,
     ];
-    for (const sql of newCols) {
+    for (const sql of migrations) {
       await client.query(sql);
     }
 
