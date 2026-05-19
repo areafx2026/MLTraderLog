@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { FONTS } from '../theme.js';
+import { LANGUAGES } from '../i18n.js';
 
 function Row({ t, label, sub, control }) {
   return (
@@ -89,7 +90,7 @@ function GhostButton({ t, children, onClick }) {
   );
 }
 
-export default function Settings({ t, mode, onToggleMode, view, onChangeView, user, onSignOut, token }) {
+export default function Settings({ t, mode, onToggleMode, view, onChangeView, user, onSignOut, token, lang, onChangeLang }) {
   const handleExport = () => {
     fetch('/api/export', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.blob())
@@ -111,6 +112,15 @@ export default function Settings({ t, mode, onToggleMode, view, onChangeView, us
       </header>
 
       <div style={{ maxWidth: 720 }}>
+        <SectionLabel t={t}>Language</SectionLabel>
+        <Row t={t} label="Language"
+          sub="Choose the interface language. More languages coming soon."
+          control={
+            <Seg t={t} value={lang}
+              options={LANGUAGES.map(l => ({ id: l.id, label: l.label }))}
+              onChange={onChangeLang} />
+          } />
+
         <SectionLabel t={t}>Appearance</SectionLabel>
         <Row t={t} label="Theme"
           sub="Linen by day, Dusk by night. Both calm — pick whichever matches the room you're in."
