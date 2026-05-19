@@ -25,6 +25,7 @@ services:
       DB_NAME: mltraderlog
       DB_USER: mltrader
       DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
     volumes:
       - mltraderlog_uploads:/app/uploads
     depends_on:

@@ -89,9 +89,16 @@ function GhostButton({ t, children, onClick }) {
   );
 }
 
-export default function Settings({ t, mode, onToggleMode, view, onChangeView }) {
+export default function Settings({ t, mode, onToggleMode, view, onChangeView, user, onSignOut, token }) {
   const handleExport = () => {
-    window.location.href = '/api/export';
+    fetch('/api/export', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'forexlog-trades.csv'; a.click();
+        URL.revokeObjectURL(url);
+      });
   };
 
   return (
@@ -121,6 +128,11 @@ export default function Settings({ t, mode, onToggleMode, view, onChangeView }) 
           } />
 
         <SectionLabel t={t}>Account</SectionLabel>
+        {user && (
+          <Row t={t} label="Signed in as"
+            sub={user.email}
+            control={null} />
+        )}
         <Row t={t} label="Display currency"
           sub="All P&L is shown in the currency you log it in."
           control={<GhostButton t={t}>Change</GhostButton>} />
@@ -142,7 +154,7 @@ export default function Settings({ t, mode, onToggleMode, view, onChangeView }) 
           control={<GhostButton t={t} onClick={handleExport}>Export</GhostButton>} />
         <Row t={t} label="Sign out"
           sub="See you tomorrow."
-          control={<GhostButton t={t}>Sign out</GhostButton>} />
+          control={<GhostButton t={t} onClick={onSignOut}>Sign out</GhostButton>} />
       </div>
     </div>
   );
