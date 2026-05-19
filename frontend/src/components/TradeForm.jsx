@@ -10,6 +10,58 @@ function nowTime() {
   return new Date().toTimeString().slice(0, 5);
 }
 
+// Defined outside TradeForm so React never treats them as new component types on re-render
+function Field({ t, form, set, k, label, sub, placeholder }) {
+  return (
+    <div style={{ borderBottom: `1px solid ${t.rule2}`, paddingBottom: 14 }}>
+      <div style={{
+        fontFamily: FONTS.serif, fontStyle: 'italic', fontSize: 12,
+        color: t.ink2, marginBottom: 8, letterSpacing: 0.2,
+      }}>{label}</div>
+      <input
+        value={form[k]}
+        onChange={(e) => set(k, e.target.value)}
+        placeholder={placeholder || 'add'}
+        style={{
+          background: 'transparent', border: 'none', outline: 'none',
+          fontFamily: FONTS.serif, fontSize: 26, letterSpacing: -0.3,
+          width: '100%', padding: 0,
+          color: form[k] ? t.ink : t.ink3,
+          fontStyle: form[k] ? 'normal' : 'italic',
+        }}
+      />
+      {sub && <div style={{ fontSize: 11, color: t.ink3, marginTop: 4 }}>{sub}</div>}
+    </div>
+  );
+}
+
+function SelectField({ t, form, set, k, label, options }) {
+  return (
+    <div style={{ borderBottom: `1px solid ${t.rule2}`, paddingBottom: 14 }}>
+      <div style={{
+        fontFamily: FONTS.serif, fontStyle: 'italic', fontSize: 12,
+        color: t.ink2, marginBottom: 8, letterSpacing: 0.2,
+      }}>{label}</div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {options.map((o) => {
+          const on = form[k].toLowerCase() === o.toLowerCase();
+          return (
+            <button key={o} onClick={() => set(k, o)}
+              style={{
+                padding: '4px 12px', borderRadius: 999, fontSize: 13,
+                fontFamily: FONTS.sans, cursor: 'pointer',
+                border: `1px solid ${on ? t.ink : t.rule2}`,
+                background: on ? t.ink : 'transparent',
+                color: on ? t.inkInk : t.ink2,
+                textTransform: 'capitalize',
+              }}>{o}</button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function TradeForm({ t, trade, onSave, onCancel }) {
   const isEdit = !!trade;
 
@@ -47,7 +99,7 @@ export default function TradeForm({ t, trade, onSave, onCancel }) {
     }
   }, [trade]);
 
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  const set = useCallback((k, v) => setForm((f) => ({ ...f, [k]: v })), []);
 
   const handleSave = useCallback(() => {
     if (!form.pair.trim() || !form.date || !form.side) return;
@@ -75,51 +127,6 @@ export default function TradeForm({ t, trade, onSave, onCancel }) {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [handleSave]);
-
-  const Field = ({ k, label, sub, placeholder = '' }) => (
-    <div style={{ borderBottom: `1px solid ${t.rule2}`, paddingBottom: 14 }}>
-      <div style={{
-        fontFamily: FONTS.serif, fontStyle: 'italic', fontSize: 12,
-        color: t.ink2, marginBottom: 8, letterSpacing: 0.2,
-      }}>{label}</div>
-      <input
-        value={form[k]}
-        onChange={(e) => set(k, e.target.value)}
-        placeholder={placeholder || 'add'}
-        style={{
-          background: 'transparent', border: 'none', outline: 'none',
-          fontFamily: FONTS.serif, fontSize: 26, letterSpacing: -0.3, width: '100%', padding: 0,
-          color: form[k] ? t.ink : t.ink3,
-          fontStyle: form[k] ? 'normal' : 'italic',
-        }}
-      />
-      {sub && <div style={{ fontSize: 11, color: t.ink3, marginTop: 4 }}>{sub}</div>}
-    </div>
-  );
-
-  const SelectField = ({ k, label, options }) => (
-    <div style={{ borderBottom: `1px solid ${t.rule2}`, paddingBottom: 14 }}>
-      <div style={{
-        fontFamily: FONTS.serif, fontStyle: 'italic', fontSize: 12,
-        color: t.ink2, marginBottom: 8, letterSpacing: 0.2,
-      }}>{label}</div>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {options.map((o) => {
-          const on = form[k].toLowerCase() === o.toLowerCase();
-          return (
-            <button key={o} onClick={() => set(k, o)}
-              style={{
-                padding: '4px 12px', borderRadius: 999, fontSize: 13,
-                fontFamily: FONTS.sans, cursor: 'pointer', border: `1px solid ${on ? t.ink : t.rule2}`,
-                background: on ? t.ink : 'transparent',
-                color: on ? t.inkInk : t.ink2,
-                textTransform: 'capitalize',
-              }}>{o}</button>
-          );
-        })}
-      </div>
-    </div>
-  );
 
   return (
     <div style={{
@@ -151,17 +158,17 @@ export default function TradeForm({ t, trade, onSave, onCancel }) {
       <div style={{
         display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '28px 64px', maxWidth: 820,
       }}>
-        <Field k="pair"  label="Pair" placeholder="EUR/USD" />
-        <SelectField k="side" label="Direction" options={['Long', 'Short']} />
-        <Field k="date"  label="Date" />
-        <Field k="time"  label="Time" placeholder="09:42" />
-        <Field k="entry" label="Entry" placeholder="1.0842" />
-        <Field k="exit"  label="Exit"  placeholder="1.0901" sub="leave blank if still open" />
-        <Field k="stop"  label="Stop"  placeholder="1.0820" />
-        <Field k="size"  label="Size"  placeholder="1.50" sub="in lots" />
-        <Field k="tag"   label="Setup" placeholder="London breakout" />
-        <SelectField k="mood" label="Mood" options={MOODS} />
-        <Field k="result_eur" label="Result ($)" placeholder="optional — computed from entry/exit if blank" />
+        <Field t={t} form={form} set={set} k="pair"       label="Pair"       placeholder="EUR/USD" />
+        <SelectField t={t} form={form} set={set} k="side" label="Direction"  options={['Long', 'Short']} />
+        <Field t={t} form={form} set={set} k="date"       label="Date" />
+        <Field t={t} form={form} set={set} k="time"       label="Time"       placeholder="09:42" />
+        <Field t={t} form={form} set={set} k="entry"      label="Entry"      placeholder="1.0842" />
+        <Field t={t} form={form} set={set} k="exit"       label="Exit"       placeholder="1.0901" sub="leave blank if still open" />
+        <Field t={t} form={form} set={set} k="stop"       label="Stop"       placeholder="1.0820" />
+        <Field t={t} form={form} set={set} k="size"       label="Size"       placeholder="1.50"   sub="in lots" />
+        <Field t={t} form={form} set={set} k="tag"        label="Setup"      placeholder="London breakout" />
+        <SelectField t={t} form={form} set={set} k="mood" label="Mood"       options={MOODS} />
+        <Field t={t} form={form} set={set} k="result_eur" label="Result ($)" placeholder="optional — computed from entry/exit if blank" />
       </div>
 
       <div style={{

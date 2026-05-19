@@ -12,6 +12,15 @@ const initDb = async () => {
   const client = await pool.connect();
   try {
     await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS trades (
         id SERIAL PRIMARY KEY,
         created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -45,8 +54,8 @@ const initDb = async () => {
       );
     `);
 
-    // New columns for ForexLog — safe to run on existing schema
-    const newCols = [
+    // Migrations — safe to run on existing schema
+    const migrations = [
       `ALTER TABLE trades ADD COLUMN IF NOT EXISTS trade_time VARCHAR(5)`,
       `ALTER TABLE trades ADD COLUMN IF NOT EXISTS exit_price NUMERIC(12, 5)`,
       `ALTER TABLE trades ADD COLUMN IF NOT EXISTS lot_size NUMERIC(10, 2)`,
@@ -54,8 +63,11 @@ const initDb = async () => {
       `ALTER TABLE trades ADD COLUMN IF NOT EXISTS rr_multiple NUMERIC(6, 2)`,
       `ALTER TABLE trades ADD COLUMN IF NOT EXISTS mood VARCHAR(20)`,
       `ALTER TABLE trades ADD COLUMN IF NOT EXISTS tag VARCHAR(100)`,
+      `ALTER TABLE trades ALTER COLUMN daily_context DROP NOT NULL`,
+      `ALTER TABLE trades ALTER COLUMN approach_character DROP NOT NULL`,
+      `ALTER TABLE trades ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE CASCADE`,
     ];
-    for (const sql of newCols) {
+    for (const sql of migrations) {
       await client.query(sql);
     }
 

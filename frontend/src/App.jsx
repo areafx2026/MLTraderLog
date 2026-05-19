@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { THEMES, FONTS } from './theme.js';
 import { computeStats, computeEquity } from './chartUtils.js';
 import Sidebar from './components/Sidebar.jsx';
@@ -8,11 +8,14 @@ import TradeDetail from './components/TradeDetail.jsx';
 import TradeForm from './components/TradeForm.jsx';
 import Insights from './components/Insights.jsx';
 import Settings from './components/Settings.jsx';
+import AuthScreen from './components/AuthScreen.jsx';
 
 const API = '/api';
-const MODE_KEY = 'fxlog:mode';
-const VIEW_KEY = 'fxlog:view';
-const NAV_KEY  = 'fxlog:nav';
+const MODE_KEY  = 'fxlog:mode';
+const VIEW_KEY  = 'fxlog:view';
+const NAV_KEY   = 'fxlog:nav';
+const TOKEN_KEY = 'fxlog:token';
+const USER_KEY  = 'fxlog:user';
 
 export default function App() {
   const [mode, setMode] = useState(() => localStorage.getItem(MODE_KEY) || 'light');
@@ -21,13 +24,17 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem(NAV_KEY)) || { screen: 'today', tradeId: null }; }
     catch { return { screen: 'today', tradeId: null }; }
   });
+  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY) || null);
+  const [user, setUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(USER_KEY)) || null; }
+    catch { return null; }
+  });
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const t = THEMES[mode] || THEMES.light;
 
   const navigate = (screen, tradeId = null) => setNav({ screen, tradeId });
-
   const toggleMode = (m) => setMode(typeof m === 'string' ? m : (prev => prev === 'light' ? 'dark' : 'light'));
   const changeView = (v) => setTradeView(v);
 
@@ -44,9 +51,35 @@ export default function App() {
     document.body.style.transition = 'background .2s, color .2s';
   }, [t]);
 
-  const fetchTrades = async () => {
+  const authHeaders = useCallback(() => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  }), [token]);
+
+  const handleAuth = (newToken, newUser) => {
+    localStorage.setItem(TOKEN_KEY, newToken);
+    localStorage.setItem(USER_KEY, JSON.stringify(newUser));
+    setToken(newToken);
+    setUser(newUser);
+  };
+
+  const handleSignOut = () => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(NAV_KEY);
+    setToken(null);
+    setUser(null);
+    setTrades([]);
+    setNav({ screen: 'today', tradeId: null });
+  };
+
+  const handle401 = () => handleSignOut();
+
+  const fetchTrades = useCallback(async () => {
+    if (!token) return;
     try {
-      const res = await fetch(`${API}/trades`);
+      const res = await fetch(`${API}/trades`, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.status === 401) { handle401(); return; }
       const data = await res.json();
       setTrades(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -55,18 +88,15 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   const handleSave = async (formData) => {
     const { id, ...body } = formData;
     const method = id ? 'PUT' : 'POST';
     const url = id ? `${API}/trades/${id}` : `${API}/trades`;
     try {
-      await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(body) });
+      if (res.status === 401) { handle401(); return; }
       await fetchTrades();
       navigate('trades');
     } catch (err) {
@@ -77,7 +107,11 @@ export default function App() {
   const handleDelete = async (id) => {
     if (!confirm('Diesen Trade löschen?')) return;
     try {
-      await fetch(`${API}/trades/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API}/trades/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.status === 401) { handle401(); return; }
       await fetchTrades();
       navigate('trades');
     } catch (err) {
@@ -85,7 +119,14 @@ export default function App() {
     }
   };
 
-  useEffect(() => { fetchTrades(); }, []);
+  useEffect(() => {
+    if (token) fetchTrades();
+    else setLoading(false);
+  }, [token, fetchTrades]);
+
+  if (!token) {
+    return <AuthScreen t={t} onAuth={handleAuth} />;
+  }
 
   const stats = computeStats(trades);
   const equity = computeEquity(trades);
@@ -128,7 +169,9 @@ export default function App() {
     case 'settings':
       screen = (
         <Settings t={t} mode={mode} onToggleMode={toggleMode}
-          view={tradeView} onChangeView={changeView} />
+          view={tradeView} onChangeView={changeView}
+          user={user} onSignOut={handleSignOut}
+          token={token} />
       );
       break;
     default:
@@ -151,6 +194,7 @@ export default function App() {
         mode={mode}
         onToggleMode={toggleMode}
         trades={trades}
+        user={user}
       />
       {screen}
     </div>
