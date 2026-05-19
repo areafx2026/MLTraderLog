@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { FONTS } from '../theme.js';
-
-const API = '/api';
+import { createT } from '../i18n.js';
 
 function Field({ t, label, type, value, onChange, error }) {
   return (
@@ -29,7 +28,8 @@ function Field({ t, label, type, value, onChange, error }) {
   );
 }
 
-export default function AuthScreen({ t, onAuth }) {
+export default function AuthScreen({ t, onAuth, lang = 'en' }) {
+  const tr = createT(lang);
   const [view, setView] = useState('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,9 +40,9 @@ export default function AuthScreen({ t, onAuth }) {
 
   const validate = () => {
     const e = {};
-    if (!email.includes('@')) e.email = 'Gültige E-Mail-Adresse eingeben';
-    if (password.length < 8) e.password = 'Mindestens 8 Zeichen';
-    if (view === 'register' && password !== password2) e.password2 = 'Passwörter stimmen nicht überein';
+    if (!email.includes('@')) e.email = tr('auth.error.invalid_email');
+    if (password.length < 8) e.password = tr('auth.error.password_min');
+    if (view === 'register' && password !== password2) e.password2 = tr('auth.error.password_mismatch');
     return e;
   };
 
@@ -62,12 +62,12 @@ export default function AuthScreen({ t, onAuth }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setServerError(data.error || 'Fehler beim Anmelden');
+        setServerError(data.error || 'Authentication failed');
       } else {
         onAuth(data.token, data.user);
       }
     } catch {
-      setServerError('Verbindung fehlgeschlagen');
+      setServerError(tr('auth.error.connection'));
     } finally {
       setLoading(false);
     }
@@ -96,16 +96,16 @@ export default function AuthScreen({ t, onAuth }) {
           fontFamily: FONTS.serif, fontStyle: 'italic', fontSize: 14,
           color: t.ink2, textAlign: 'center', marginBottom: 40,
         }}>
-          {view === 'login' ? 'Welcome back.' : 'Start your journal.'}
+          {view === 'login' ? tr('auth.tagline.login') : tr('auth.tagline.register')}
         </div>
 
         <form onSubmit={handleSubmit} noValidate>
-          <Field t={t} label="E-Mail" type="email"
+          <Field t={t} label={tr('auth.email')} type="email"
             value={email} onChange={setEmail} error={errors.email} />
-          <Field t={t} label="Passwort" type="password"
+          <Field t={t} label={tr('auth.password')} type="password"
             value={password} onChange={setPassword} error={errors.password} />
           {view === 'register' && (
-            <Field t={t} label="Passwort wiederholen" type="password"
+            <Field t={t} label={tr('auth.password_repeat')} type="password"
               value={password2} onChange={setPassword2} error={errors.password2} />
           )}
 
@@ -122,28 +122,26 @@ export default function AuthScreen({ t, onAuth }) {
             background: t.ink, color: t.bg,
             opacity: loading ? 0.7 : 1,
           }}>
-            {loading ? '…' : view === 'login' ? 'Sign in' : 'Create account'}
+            {loading ? '…' : view === 'login' ? tr('auth.sign_in') : tr('auth.create_account')}
           </button>
         </form>
 
-        <div style={{
-          marginTop: 24, textAlign: 'center', fontSize: 13, color: t.ink2,
-        }}>
+        <div style={{ marginTop: 24, textAlign: 'center', fontSize: 13, color: t.ink2 }}>
           {view === 'login' ? (
-            <>Noch kein Account?{' '}
+            <>{tr('auth.no_account')}{' '}
               <button onClick={() => switchView('register')} style={{
                 background: 'none', border: 'none', color: t.ink,
                 cursor: 'pointer', fontFamily: FONTS.sans, fontSize: 13,
                 textDecoration: 'underline', padding: 0,
-              }}>Registrieren</button>
+              }}>{tr('auth.sign_up')}</button>
             </>
           ) : (
-            <>Schon registriert?{' '}
+            <>{tr('auth.already_registered')}{' '}
               <button onClick={() => switchView('login')} style={{
                 background: 'none', border: 'none', color: t.ink,
                 cursor: 'pointer', fontFamily: FONTS.sans, fontSize: 13,
                 textDecoration: 'underline', padding: 0,
-              }}>Anmelden</button>
+              }}>{tr('auth.sign_in')}</button>
             </>
           )}
         </div>

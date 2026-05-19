@@ -9,6 +9,7 @@ import TradeForm from './components/TradeForm.jsx';
 import Insights from './components/Insights.jsx';
 import Settings from './components/Settings.jsx';
 import AuthScreen from './components/AuthScreen.jsx';
+import { LANG_KEY, DEFAULT_LANG, createT } from './i18n.js';
 
 const API = '/api';
 const MODE_KEY  = 'fxlog:mode';
@@ -24,6 +25,7 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem(NAV_KEY)) || { screen: 'today', tradeId: null }; }
     catch { return { screen: 'today', tradeId: null }; }
   });
+  const [lang, setLang] = useState(() => localStorage.getItem(LANG_KEY) || DEFAULT_LANG);
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY) || null);
   const [user, setUser] = useState(() => {
     try { return JSON.parse(localStorage.getItem(USER_KEY)) || null; }
@@ -33,7 +35,9 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   const t = THEMES[mode] || THEMES.light;
+  const tr = createT(lang);
 
+  const changeLang = (l) => { setLang(l); localStorage.setItem(LANG_KEY, l); };
   const navigate = (screen, tradeId = null) => setNav({ screen, tradeId });
   const toggleMode = (m) => setMode(typeof m === 'string' ? m : (prev => prev === 'light' ? 'dark' : 'light'));
   const changeView = (v) => setTradeView(v);
@@ -105,7 +109,7 @@ export default function App() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Diesen Trade löschen?')) return;
+    if (!confirm(tr('confirm.delete_trade'))) return;
     try {
       const res = await fetch(`${API}/trades/${id}`, {
         method: 'DELETE',
@@ -125,7 +129,7 @@ export default function App() {
   }, [token, fetchTrades]);
 
   if (!token) {
-    return <AuthScreen t={t} onAuth={handleAuth} />;
+    return <AuthScreen t={t} onAuth={handleAuth} lang={lang} />;
   }
 
   const stats = computeStats(trades);
@@ -171,7 +175,7 @@ export default function App() {
         <Settings t={t} mode={mode} onToggleMode={toggleMode}
           view={tradeView} onChangeView={changeView}
           user={user} onSignOut={handleSignOut}
-          token={token} />
+          token={token} lang={lang} onChangeLang={changeLang} />
       );
       break;
     default:
