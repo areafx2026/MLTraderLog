@@ -43,12 +43,11 @@ export default function Sidebar({ t, screen, onNavigate, mode, onToggleMode, tra
       background: t.bg,
       display: 'flex', flexDirection: 'column', gap: 32,
     }}>
-      <div style={{
-        fontFamily: FONTS.serif, fontSize: 24, fontStyle: 'italic',
-        fontWeight: 500, lineHeight: 1, letterSpacing: -0.3, color: t.ink,
-      }}>
-        FxLedger<span style={{ color: t.accent }}>.</span>
-      </div>
+      <img
+        src={mode === 'dark' ? '/lockup-dark.svg' : '/lockup-light.svg'}
+        alt="FxLedger"
+        style={{ height: 32, display: 'block' }}
+      />
 
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {NAV_ITEMS.map((item) => {

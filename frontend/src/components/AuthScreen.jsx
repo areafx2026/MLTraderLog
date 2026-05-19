@@ -28,7 +28,7 @@ function Field({ t, label, type, value, onChange, error }) {
   );
 }
 
-export default function AuthScreen({ t, onAuth, lang = 'en' }) {
+export default function AuthScreen({ t, onAuth, lang = 'en', mode = 'light' }) {
   const tr = createT(lang);
   const [view, setView] = useState('login');
   const [email, setEmail] = useState('');
@@ -86,11 +86,12 @@ export default function AuthScreen({ t, onAuth, lang = 'en' }) {
       fontFamily: FONTS.sans,
     }}>
       <div style={{ width: 360 }}>
-        <div style={{
-          fontFamily: FONTS.serif, fontSize: 28, fontWeight: 700,
-          letterSpacing: -0.5, color: t.ink, marginBottom: 8, textAlign: 'center',
-        }}>
-          FxLedger<span style={{ color: t.accent }}>.</span>
+        <div style={{ textAlign: 'center', marginBottom: 8 }}>
+          <img
+            src={mode === 'dark' ? '/lockup-dark.svg' : '/lockup-light.svg'}
+            alt="FxLedger"
+            style={{ height: 40, display: 'inline-block' }}
+          />
         </div>
         <div style={{
           fontFamily: FONTS.serif, fontStyle: 'italic', fontSize: 14,
