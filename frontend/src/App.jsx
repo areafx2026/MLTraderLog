@@ -129,7 +129,7 @@ export default function App() {
   }, [token, fetchTrades]);
 
   if (!token) {
-    return <AuthScreen t={t} onAuth={handleAuth} lang={lang} />;
+    return <AuthScreen t={t} onAuth={handleAuth} lang={lang} mode={mode} />;
   }
 
   const stats = computeStats(trades);
