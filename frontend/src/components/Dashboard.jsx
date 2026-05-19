@@ -82,15 +82,28 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
       {/* equity chart */}
       <section style={{ marginBottom: 40 }}>
         <div style={{
-          display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
-          marginBottom: 18,
+          display: 'grid', gridTemplateColumns: '1fr auto 1fr',
+          alignItems: 'end', marginBottom: 18,
         }}>
           <div style={{
             fontFamily: FONTS.serif, fontSize: 16, fontStyle: 'italic', color: t.ink2,
           }}>
             Equity curve
           </div>
-          <div style={{ display: 'flex', gap: 16, fontSize: 13, color: t.ink2 }}>
+          {equity.length > 0 && (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                fontFamily: FONTS.serif, fontSize: 36, fontWeight: 500,
+                letterSpacing: -0.5, color: t.ink, lineHeight: 1,
+              }}>
+                {totalPL >= 0 ? '+' : '–'}${usd(Math.abs(totalPL))}
+              </div>
+              <div style={{ fontSize: 12, color: monthPL >= 0 ? t.win : t.loss, fontWeight: 500, marginTop: 2 }}>
+                {monthPL >= 0 ? '+' : '–'}${usd(Math.abs(monthPL))} · this month
+              </div>
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 16, fontSize: 13, color: t.ink2, justifyContent: 'flex-end' }}>
             {RANGES.map((r, i) => (
               <span key={r} style={{
                 color: i === 0 ? t.ink : t.ink3,
@@ -109,22 +122,6 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
             }}>Loading…</div>
           ) : (
             <EquityChart t={t} points={equity} height={220} />
-          )}
-          {equity.length > 0 && (
-            <div style={{
-              position: 'absolute', right: 0, top: -4, textAlign: 'right',
-              background: t.bg, padding: '0 4px',
-            }}>
-              <div style={{
-                fontFamily: FONTS.serif, fontSize: 36, fontWeight: 500,
-                letterSpacing: -0.5, color: t.ink,
-              }}>
-                {totalPL >= 0 ? '+' : '–'}${usd(Math.abs(totalPL))}
-              </div>
-              <div style={{ fontSize: 12, color: monthPL >= 0 ? t.win : t.loss, fontWeight: 500 }}>
-                {monthPL >= 0 ? '+' : '–'}${usd(Math.abs(monthPL))} · this month
-              </div>
-            </div>
           )}
         </div>
       </section>
