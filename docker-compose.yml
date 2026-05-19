@@ -16,8 +16,6 @@ services:
     build: ./backend
     container_name: forexlog_backend
     restart: unless-stopped
-    ports:
-      - "3002:3002"
     environment:
       PORT: 3002
       DB_HOST: db
