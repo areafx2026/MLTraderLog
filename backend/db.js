@@ -66,6 +66,8 @@ const initDb = async () => {
       `ALTER TABLE trades ALTER COLUMN daily_context DROP NOT NULL`,
       `ALTER TABLE trades ALTER COLUMN approach_character DROP NOT NULL`,
       `ALTER TABLE trades ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE CASCADE`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(50)`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users (lower(username)) WHERE username IS NOT NULL`,
     ];
     for (const sql of migrations) {
       await client.query(sql);
