@@ -35,8 +35,8 @@ export default function Sidebar({ t, screen, onNavigate, mode, onToggleMode, tra
     ? `${weekCount} trade${weekCount !== 1 ? 's' : ''} this week.`
     : 'Nothing logged yet.';
 
-  const initial = (user?.username || user?.email || '?')[0].toUpperCase();
-  const displayName = user?.username || user?.email?.split('@')[0] || '';
+  const initial = ((user?.username || user?.email || '?')[0] || '?').toUpperCase();
+  const displayName = user?.username || user?.email?.split('@')[0] || 'account';
 
   return (
     <aside style={{
@@ -49,7 +49,7 @@ export default function Sidebar({ t, screen, onNavigate, mode, onToggleMode, tra
       <img
         src={mode === 'dark' ? '/lockup-dark.svg' : '/lockup-light.svg'}
         alt="FxLedger"
-        style={{ height: 32, display: 'block' }}
+        style={{ height: 32, width: 'auto', display: 'block', alignSelf: 'flex-start', maxWidth: '100%' }}
       />
 
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
