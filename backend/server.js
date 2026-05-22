@@ -60,7 +60,7 @@ function normalizeUsername(raw) {
 
 function validateUsername(raw) {
   if (!raw || raw.trim().length < 2) return 'At least 2 characters required';
-  if (raw.trim().length > 30) return 'Maximum 30 characters';
+  if (raw.trim().length > 20) return 'Maximum 20 characters';
   // Reject control characters and null bytes
   if (/[\x00-\x1F\x7F]/.test(raw)) return 'Invalid characters';
   return null;
@@ -137,7 +137,46 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 app.get('/api/auth/me', requireAuth, async (req, res) => {
-  res.json({ id: req.user.userId, email: req.user.email });
+  res.json({ id: req.user.userId, email: req.user.email, username: req.user.username });
+});
+
+app.put('/api/auth/email', requireAuth, async (req, res) => {
+  const { newEmail, password } = req.body;
+  if (!newEmail?.includes('@')) return res.status(400).json({ error: 'Invalid email address' });
+  if (!password) return res.status(400).json({ error: 'Current password required' });
+  try {
+    const result = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.userId]);
+    if (!result.rows.length || !(await bcrypt.compare(password, result.rows[0].password_hash))) {
+      return res.status(401).json({ error: 'Incorrect password' });
+    }
+    const updated = await pool.query(
+      'UPDATE users SET email = $1 WHERE id = $2 RETURNING email',
+      [newEmail.toLowerCase().trim(), req.user.userId]
+    );
+    res.json({ email: updated.rows[0].email });
+  } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ error: 'Email already in use' });
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.put('/api/auth/password', requireAuth, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword) return res.status(400).json({ error: 'Current password required' });
+  if (!newPassword || newPassword.length < 8) return res.status(400).json({ error: 'New password must be at least 8 characters' });
+  try {
+    const result = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.userId]);
+    if (!result.rows.length || !(await bcrypt.compare(currentPassword, result.rows[0].password_hash))) {
+      return res.status(401).json({ error: 'Incorrect current password' });
+    }
+    const hash = await bcrypt.hash(newPassword, 12);
+    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, req.user.userId]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

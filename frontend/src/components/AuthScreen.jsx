@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { FONTS } from '../theme.js';
 import { createT } from '../i18n.js';
+import { ModeToggle } from './Sidebar.jsx';
 
 function Field({ t, label, type, value, onChange, onBlur, error, hint, badge }) {
   return (
@@ -40,7 +41,7 @@ function Field({ t, label, type, value, onChange, onBlur, error, hint, badge }) 
   );
 }
 
-export default function AuthScreen({ t, onAuth, lang = 'en', mode = 'light' }) {
+export default function AuthScreen({ t, onAuth, lang = 'en', mode = 'light', onToggleMode }) {
   const tr = createT(lang);
   const [view, setView] = useState('login');
 
@@ -150,8 +151,15 @@ export default function AuthScreen({ t, onAuth, lang = 'en', mode = 'light' }) {
     <div style={{
       width: '100vw', height: '100vh',
       background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: FONTS.sans,
+      fontFamily: FONTS.sans, position: 'relative',
     }}>
+      {/* Theme toggle bottom-left */}
+      {onToggleMode && (
+        <div style={{ position: 'absolute', bottom: 28, left: 28 }}>
+          <ModeToggle t={t} mode={mode} onToggle={onToggleMode} />
+        </div>
+      )}
+
       <div style={{ width: 360 }}>
         <div style={{ textAlign: 'center', marginBottom: 8 }}>
           <img

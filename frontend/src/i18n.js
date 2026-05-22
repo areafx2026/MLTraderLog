@@ -21,7 +21,7 @@ const en = {
   'auth.sign_up': 'Sign up',
   'auth.already_registered': 'Already registered?',
   'auth.username': 'Username',
-  'auth.username.hint': '2–30 characters, any language',
+  'auth.username.hint': '2–20 characters, any language',
   'auth.username.checking': 'Checking…',
   'auth.username.available': 'Available',
   'auth.username.taken': 'Already taken',

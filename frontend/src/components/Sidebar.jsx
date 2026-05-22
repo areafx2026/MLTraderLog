@@ -17,7 +17,7 @@ const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'];
 
-export default function Sidebar({ t, screen, onNavigate, mode, onToggleMode, trades }) {
+export default function Sidebar({ t, screen, onNavigate, mode, onToggleMode, trades, user }) {
   const isActive = (id) =>
     screen === id || (id === 'trades' && (screen === 'detail' || screen === 'add'));
 
@@ -34,6 +34,9 @@ export default function Sidebar({ t, screen, onNavigate, mode, onToggleMode, tra
   const streakLine = weekCount > 0
     ? `${weekCount} trade${weekCount !== 1 ? 's' : ''} this week.`
     : 'Nothing logged yet.';
+
+  const initial = (user?.username || user?.email || '?')[0].toUpperCase();
+  const displayName = user?.username || user?.email?.split('@')[0] || '';
 
   return (
     <aside style={{
@@ -72,6 +75,33 @@ export default function Sidebar({ t, screen, onNavigate, mode, onToggleMode, tra
       </nav>
 
       <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {/* Avatar + username → profile */}
+        <button onClick={() => onNavigate('profile')}
+          style={{
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            padding: '6px 0', display: 'flex', alignItems: 'center', gap: 10,
+            borderRadius: 6, transition: 'opacity .15s', textAlign: 'left',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.7')}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}>
+          <div style={{
+            width: 30, height: 30, borderRadius: '50%',
+            background: t.accent, color: t.bg,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: FONTS.sans, fontWeight: 700, fontSize: 13,
+            flexShrink: 0,
+          }}>
+            {initial}
+          </div>
+          <span style={{
+            fontFamily: FONTS.sans, fontSize: 12, color: t.ink2,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {displayName}
+          </span>
+        </button>
+
+        {/* Date + week info */}
         <div style={{
           fontSize: 12, color: t.ink3, lineHeight: 1.55,
           fontFamily: FONTS.serif, fontStyle: 'italic',
@@ -79,13 +109,14 @@ export default function Sidebar({ t, screen, onNavigate, mode, onToggleMode, tra
           {dayName}, {dateOrd} of {monthName}.<br />
           {streakLine}
         </div>
+
         <ModeToggle t={t} mode={mode} onToggle={onToggleMode} />
       </div>
     </aside>
   );
 }
 
-function ModeToggle({ t, mode, onToggle }) {
+export function ModeToggle({ t, mode, onToggle }) {
   return (
     <button onClick={onToggle} aria-label="Toggle theme"
       style={{
