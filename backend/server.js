@@ -53,22 +53,61 @@ app.post('/api/upload', requireAuth, upload.array('screenshots', 2), (req, res) 
 
 // ── Auth routes ──────────────────────────────────────────────────────────────
 
+// Normalize username: NFC, trim, collapse inner whitespace
+function normalizeUsername(raw) {
+  return raw.normalize('NFC').trim().replace(/\s+/g, ' ');
+}
+
+function validateUsername(raw) {
+  if (!raw || raw.trim().length < 2) return 'At least 2 characters required';
+  if (raw.trim().length > 30) return 'Maximum 30 characters';
+  // Reject control characters and null bytes
+  if (/[\x00-\x1F\x7F]/.test(raw)) return 'Invalid characters';
+  return null;
+}
+
+app.post('/api/auth/check-username', async (req, res) => {
+  const { username } = req.body;
+  const err = validateUsername(username);
+  if (err) return res.status(400).json({ available: false, error: err });
+  const normalized = normalizeUsername(username);
+  try {
+    const result = await pool.query(
+      'SELECT id FROM users WHERE lower(username) = lower($1)',
+      [normalized]
+    );
+    res.json({ available: result.rows.length === 0 });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ available: false, error: 'Server error' });
+  }
+});
+
 app.post('/api/auth/register', async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, username } = req.body;
   if (!email || !password || password.length < 8) {
     return res.status(400).json({ error: 'Email and password (min 8 chars) required' });
   }
+  const usernameErr = validateUsername(username);
+  if (usernameErr) return res.status(400).json({ error: usernameErr });
+  const normalizedUsername = normalizeUsername(username);
   try {
     const hash = await bcrypt.hash(password, 12);
     const result = await pool.query(
-      'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email',
-      [email.toLowerCase().trim(), hash]
+      'INSERT INTO users (email, password_hash, username) VALUES ($1, $2, $3) RETURNING id, email, username',
+      [email.toLowerCase().trim(), hash, normalizedUsername]
     );
     const user = result.rows[0];
-    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '30d' });
-    res.status(201).json({ token, user: { id: user.id, email: user.email } });
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, username: user.username },
+      JWT_SECRET, { expiresIn: '30d' }
+    );
+    res.status(201).json({ token, user: { id: user.id, email: user.email, username: user.username } });
   } catch (err) {
-    if (err.code === '23505') return res.status(409).json({ error: 'Email already registered' });
+    if (err.code === '23505') {
+      if (err.constraint?.includes('username')) return res.status(409).json({ error: 'Username already taken' });
+      return res.status(409).json({ error: 'Email already registered' });
+    }
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
@@ -79,15 +118,18 @@ app.post('/api/auth/login', async (req, res) => {
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
   try {
     const result = await pool.query(
-      'SELECT id, email, password_hash FROM users WHERE email = $1',
+      'SELECT id, email, username, password_hash FROM users WHERE email = $1',
       [email.toLowerCase().trim()]
     );
     const user = result.rows[0];
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '30d' });
-    res.json({ token, user: { id: user.id, email: user.email } });
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, username: user.username },
+      JWT_SECRET, { expiresIn: '30d' }
+    );
+    res.json({ token, user: { id: user.id, email: user.email, username: user.username } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
