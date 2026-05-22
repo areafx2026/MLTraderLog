@@ -9,6 +9,7 @@ import TradeForm from './components/TradeForm.jsx';
 import Insights from './components/Insights.jsx';
 import Settings from './components/Settings.jsx';
 import AuthScreen from './components/AuthScreen.jsx';
+import Profile from './components/Profile.jsx';
 import { LANG_KEY, DEFAULT_LANG, createT } from './i18n.js';
 
 const API = '/api';
@@ -129,7 +130,7 @@ export default function App() {
   }, [token, fetchTrades]);
 
   if (!token) {
-    return <AuthScreen t={t} onAuth={handleAuth} lang={lang} mode={mode} />;
+    return <AuthScreen t={t} onAuth={handleAuth} lang={lang} mode={mode} onToggleMode={toggleMode} />;
   }
 
   const stats = computeStats(trades);
@@ -169,6 +170,15 @@ export default function App() {
       break;
     case 'insights':
       screen = <Insights t={t} trades={trades} equity={equity} />;
+      break;
+    case 'profile':
+      screen = (
+        <Profile t={t} user={user} token={token}
+          onUserUpdate={(updated) => {
+            setUser(updated);
+            localStorage.setItem(USER_KEY, JSON.stringify(updated));
+          }} />
+      );
       break;
     case 'settings':
       screen = (
