@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git fetch origin 2>/dev/null; DRIFT=$(git log origin/main..HEAD --oneline 2>/dev/null); if [ -n \"$DRIFT\" ]; then printf '{\"systemMessage\":\"⚠️  DRIFT WARNING — unmerged commits on this branch:\\n%s\\n\\nCreate or update a PR before closing this session.\"}' \"$DRIFT\"; else echo '{}'; fi",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
