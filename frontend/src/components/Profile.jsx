@@ -12,14 +12,14 @@ function SectionLabel({ t, children }) {
 
 function Row({ t, label, value, sub }) {
   return (
-    <div style={{
-      padding: '20px 0', borderBottom: `1px solid ${t.rule}`,
-    }}>
-      <div style={{ fontFamily: FONTS.serif, fontSize: 18, color: t.ink, lineHeight: 1.2, marginBottom: 4 }}>
-        {label}
-      </div>
-      <div style={{ fontFamily: FONTS.serif, fontSize: 15, color: t.ink, marginBottom: 4 }}>
-        {value}
+    <div style={{ padding: '20px 0', borderBottom: `1px solid ${t.rule}` }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 16, marginBottom: 4 }}>
+        <div style={{ fontFamily: FONTS.serif, fontSize: 18, color: t.ink, lineHeight: 1.2 }}>
+          {label}
+        </div>
+        <div style={{ fontFamily: FONTS.serif, fontSize: 15, color: t.ink, textAlign: 'right' }}>
+          {value}
+        </div>
       </div>
       <div style={{ fontSize: 13, color: t.ink2, fontFamily: FONTS.serif, fontStyle: 'italic' }}>
         {sub}
