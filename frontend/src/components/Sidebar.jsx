@@ -43,7 +43,7 @@ export default function Sidebar({ t, screen, onNavigate, mode, onToggleMode, tra
       width: 208, flexShrink: 0,
       padding: '36px 28px 28px',
       borderRight: `1px solid ${t.rule}`,
-      background: t.bg,
+      background: mode === 'dark' ? t.bg : t.paper,
       display: 'flex', flexDirection: 'column', gap: 32,
     }}>
       <img

@@ -50,7 +50,7 @@ export default function App() {
   }, [nav]);
 
   useEffect(() => {
-    document.body.style.background = t.bg;
+    document.body.style.background = mode === 'dark' ? t.bg : t.paper;
     document.body.style.color = t.ink;
     document.body.style.fontFamily = FONTS.sans;
     document.body.style.transition = 'background .2s, color .2s';
@@ -198,7 +198,7 @@ export default function App() {
   return (
     <div style={{
       width: '100vw', height: '100vh', display: 'flex',
-      background: t.bg, color: t.ink, fontFamily: FONTS.sans,
+      background: mode === 'dark' ? t.bg : t.paper, color: t.ink, fontFamily: FONTS.sans,
       fontSize: 14, overflow: 'hidden',
     }}>
       <Sidebar
