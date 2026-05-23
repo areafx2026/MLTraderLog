@@ -150,7 +150,7 @@ export default function AuthScreen({ t, onAuth, lang = 'en', mode = 'light', onT
   return (
     <div style={{
       width: '100vw', height: '100vh',
-      background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: mode === 'dark' ? t.bg : t.paper, display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: FONTS.sans, position: 'relative',
     }}>
       {/* Theme toggle bottom-left */}
@@ -161,11 +161,11 @@ export default function AuthScreen({ t, onAuth, lang = 'en', mode = 'light', onT
       )}
 
       <div style={{ width: 360 }}>
-        <div style={{ textAlign: 'center', marginBottom: 8 }}>
+        <div style={{ overflow: 'hidden', marginBottom: 8 }}>
           <img
             src={mode === 'dark' ? '/lockup-dark.png' : '/lockup-light.png'}
             alt="FxLedger"
-            style={{ width: '100%', display: 'block' }}
+            style={{ width: '100%', display: 'block', transform: 'translateX(27px)' }}
           />
         </div>
         <div style={{
