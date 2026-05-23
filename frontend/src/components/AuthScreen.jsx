@@ -163,9 +163,9 @@ export default function AuthScreen({ t, onAuth, lang = 'en', mode = 'light', onT
       <div style={{ width: 360 }}>
         <div style={{ textAlign: 'center', marginBottom: 8 }}>
           <img
-            src={mode === 'dark' ? '/lockup-dark.svg' : '/lockup-light.svg'}
+            src={mode === 'dark' ? '/lockup-dark.png' : '/lockup-light.png'}
             alt="FxLedger"
-            style={{ height: 40, display: 'inline-block' }}
+            style={{ width: '100%', display: 'block' }}
           />
         </div>
         <div style={{
