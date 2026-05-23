@@ -76,9 +76,10 @@ export default function Profile({ t, user, token }) {
   const [pwStatus, setPwStatus] = useState(null);
 
   const handlePasswordSave = async () => {
-    if (newPw.length < 8) { setPwStatus({ ok: false, msg: 'At least 8 characters required' }); return; }
-    if (newPw !== confirmPw) { setPwStatus({ ok: false, msg: 'Passwords do not match' }); return; }
     if (!currentPw) { setPwStatus({ ok: false, msg: 'Current password required' }); return; }
+    if (newPw.length < 8) { setPwStatus({ ok: false, msg: 'At least 8 characters required' }); return; }
+    if (newPw === currentPw) { setPwStatus({ ok: false, msg: 'New password must differ from current password' }); return; }
+    if (newPw !== confirmPw) { setPwStatus({ ok: false, msg: 'Passwords do not match' }); return; }
     setPwStatus(null);
     try {
       const res = await fetch('/api/auth/password', {
