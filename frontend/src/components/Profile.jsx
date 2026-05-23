@@ -86,8 +86,11 @@ export default function Profile({ t, user, token }) {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }),
       });
-      const data = await res.json();
-      if (!res.ok) { setPwStatus({ ok: false, msg: data.error }); return; }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setPwStatus({ ok: false, msg: data.error || `Error ${res.status}` });
+        return;
+      }
       setPwStatus({ ok: true, msg: 'Password updated successfully' });
       setCurrentPw(''); setNewPw(''); setConfirmPw('');
     } catch {
