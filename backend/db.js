@@ -69,6 +69,13 @@ const initDb = async () => {
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(20)`,
       `CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users (lower(username)) WHERE username IS NOT NULL`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS theme VARCHAR(10) NOT NULL DEFAULT 'dark'`,
+      `CREATE TABLE IF NOT EXISTS password_history (
+        id SERIAL PRIMARY KEY,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        password_hash VARCHAR(255) NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS password_history_user_id ON password_history (user_id, created_at DESC)`,
     ];
     for (const sql of migrations) {
       await client.query(sql);
