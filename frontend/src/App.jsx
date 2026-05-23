@@ -72,13 +72,24 @@ export default function App() {
     'Authorization': `Bearer ${token}`,
   }), [token]);
 
-  // On startup: load theme from server so it stays in sync across devices
+  // On startup: if stored token exists, sync theme — localStorage wins over DB
+  // (user may have toggled while logged out), but write back to DB if they differ.
   useEffect(() => {
     if (!token) return;
+    const localTheme = localStorage.getItem(MODE_KEY);
     fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (data?.theme) {
+        if (!data) return;
+        if (localTheme && localTheme !== data.theme) {
+          // Local choice wins — push it back to DB
+          fetch(`${API}/auth/theme`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ theme: localTheme }),
+          }).catch(() => {});
+        } else if (data.theme) {
+          // No local override — apply DB value
           setMode(data.theme);
           localStorage.setItem(MODE_KEY, data.theme);
         }
@@ -91,7 +102,16 @@ export default function App() {
     localStorage.setItem(USER_KEY, JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
-    if (newUser.theme) {
+    // localStorage wins: if user toggled while logged out, keep that choice
+    // and write it back to the server; otherwise apply server theme.
+    const localTheme = localStorage.getItem(MODE_KEY);
+    if (localTheme && localTheme !== newUser.theme) {
+      fetch(`${API}/auth/theme`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${newToken}` },
+        body: JSON.stringify({ theme: localTheme }),
+      }).catch(() => {});
+    } else if (newUser.theme) {
       setMode(newUser.theme);
       localStorage.setItem(MODE_KEY, newUser.theme);
     }
