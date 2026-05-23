@@ -1,7 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 130" fill="none">
-  
+  <style>
+    .wordmark { font-family: Georgia, "Times New Roman", serif; font-size: 54px; fill: #2a2620; }
+    .fx       { font-weight: 700; }
+    .ledger   { font-weight: 400; }
+  </style>
 
-  
   <g transform="translate(0, 10)">
     <rect x="12" y="22" width="76" height="56" rx="3" stroke="#2a2620" stroke-width="5" stroke-linejoin="round"></rect>
     <line x1="50" y1="22" x2="50" y2="78" stroke="#2a2620" stroke-width="3.5" stroke-linecap="round"></line>
@@ -12,7 +15,7 @@
     <line x1="56" y1="50" x2="76" y2="50" stroke="#b5613f" stroke-width="3.2" stroke-linecap="round"></line>
   </g>
 
-  <text x="124" y="88" class="wordmark">
+  <text x="112" y="88" class="wordmark">
     <tspan class="fx">Fx</tspan><tspan class="ledger">Ledger</tspan>
   </text>
 </svg>
