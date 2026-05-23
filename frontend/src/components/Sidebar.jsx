@@ -17,7 +17,7 @@ const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'];
 
-export default function Sidebar({ t, screen, onNavigate, mode, onToggleMode, trades, user }) {
+export default function Sidebar({ t, screen, onNavigate, mode, theme, onSetTheme, trades, user }) {
   const isActive = (id) =>
     screen === id || (id === 'trades' && (screen === 'detail' || screen === 'add'));
 
@@ -110,45 +110,71 @@ export default function Sidebar({ t, screen, onNavigate, mode, onToggleMode, tra
           {streakLine}
         </div>
 
-        <ModeToggle t={t} mode={mode} onToggle={onToggleMode} />
+        <ModeToggle t={t} theme={theme} onSetTheme={onSetTheme} />
       </div>
     </aside>
   );
 }
 
-export function ModeToggle({ t, mode, onToggle }) {
+const THEME_OPTIONS = [
+  {
+    id: 'light',
+    label: 'Light',
+    icon: (
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none"
+        stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+        <circle cx="7" cy="7" r="2.6" />
+        <path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.7 2.7l1 1M10.3 10.3l1 1M2.7 11.3l1-1M10.3 3.7l1-1" />
+      </svg>
+    ),
+  },
+  {
+    id: 'system',
+    label: 'System',
+    icon: (
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none"
+        stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="1" y="2" width="12" height="8" rx="1.2" />
+        <path d="M4 13h6M7 10v3" />
+      </svg>
+    ),
+  },
+  {
+    id: 'dark',
+    label: 'Dark',
+    icon: (
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none"
+        stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 8.5A5.5 5.5 0 0 1 5.5 2a5.5 5.5 0 1 0 6.5 6.5z" />
+      </svg>
+    ),
+  },
+];
+
+export function ModeToggle({ t, theme, onSetTheme }) {
   return (
-    <button onClick={onToggle} aria-label="Toggle theme"
+    <div aria-label="Theme" role="group"
       style={{
         background: 'transparent', border: `1px solid ${t.rule2}`,
-        borderRadius: 999, padding: 3, cursor: 'pointer',
+        borderRadius: 999, padding: 3,
         display: 'inline-flex', alignSelf: 'flex-start',
       }}>
-      {['light', 'dark'].map((m) => {
-        const on = mode === m;
+      {THEME_OPTIONS.map(({ id, label, icon }) => {
+        const on = theme === id;
         return (
-          <span key={m} style={{
-            width: 30, height: 26, borderRadius: 999,
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            background: on ? t.ink : 'transparent',
-            color: on ? t.inkInk : t.ink2,
-            transition: 'background .18s, color .18s',
-          }}>
-            {m === 'light' ? (
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none"
-                stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-                <circle cx="7" cy="7" r="2.6" />
-                <path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.7 2.7l1 1M10.3 10.3l1 1M2.7 11.3l1-1M10.3 3.7l1-1" />
-              </svg>
-            ) : (
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none"
-                stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 8.5A5.5 5.5 0 0 1 5.5 2a5.5 5.5 0 1 0 6.5 6.5z" />
-              </svg>
-            )}
-          </span>
+          <button key={id} onClick={() => onSetTheme(id)} aria-label={label}
+            style={{
+              width: 30, height: 26, borderRadius: 999, border: 'none',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              background: on ? t.ink : 'transparent',
+              color: on ? t.inkInk : t.ink2,
+              cursor: 'pointer',
+              transition: 'background .18s, color .18s',
+            }}>
+            {icon}
+          </button>
         );
       })}
-    </button>
+    </div>
   );
 }

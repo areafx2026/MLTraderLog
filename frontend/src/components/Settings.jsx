@@ -90,7 +90,7 @@ function GhostButton({ t, children, onClick }) {
   );
 }
 
-export default function Settings({ t, mode, onToggleMode, view, onChangeView, user, onSignOut, token, lang, onChangeLang }) {
+export default function Settings({ t, mode, theme, onSetTheme, view, onChangeView, user, onSignOut, token, lang, onChangeLang }) {
   const handleExport = () => {
     fetch('/api/export', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.blob())
@@ -123,11 +123,15 @@ export default function Settings({ t, mode, onToggleMode, view, onChangeView, us
 
         <SectionLabel t={t}>Appearance</SectionLabel>
         <Row t={t} label="Theme"
-          sub="Linen by day, Dusk by night. Both calm — pick whichever matches the room you're in."
+          sub="Linen by day, Dusk by night — or let your system decide."
           control={
-            <Seg t={t} value={mode}
-              options={[{ id: 'light', label: 'Linen' }, { id: 'dark', label: 'Dusk' }]}
-              onChange={(m) => onToggleMode(m)} />
+            <Seg t={t} value={theme}
+              options={[
+                { id: 'light', label: 'Linen' },
+                { id: 'system', label: 'Auto' },
+                { id: 'dark', label: 'Dusk' },
+              ]}
+              onChange={onSetTheme} />
           } />
         <Row t={t} label="Default trade view"
           sub="How Trades opens by default. You can always flip at the top."
