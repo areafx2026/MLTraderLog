@@ -193,8 +193,32 @@ app.put('/api/auth/password', requireAuth, async (req, res) => {
     if (!result.rows.length || !(await bcrypt.compare(currentPassword, result.rows[0].password_hash))) {
       return res.status(401).json({ error: 'Incorrect current password' });
     }
-    const hash = await bcrypt.hash(newPassword, 12);
-    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, req.user.userId]);
+
+    // Check against last 3 passwords in history
+    const history = await pool.query(
+      'SELECT password_hash FROM password_history WHERE user_id = $1 ORDER BY created_at DESC LIMIT 3',
+      [req.user.userId]
+    );
+    for (const row of history.rows) {
+      if (await bcrypt.compare(newPassword, row.password_hash)) {
+        return res.status(400).json({ error: 'This password was used recently. Please choose a different one.' });
+      }
+    }
+
+    // Save old hash to history, then update password
+    const oldHash = result.rows[0].password_hash;
+    const newHash = await bcrypt.hash(newPassword, 12);
+    await pool.query('INSERT INTO password_history (user_id, password_hash) VALUES ($1, $2)', [req.user.userId, oldHash]);
+    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [newHash, req.user.userId]);
+
+    // Keep only the last 10 entries per user
+    await pool.query(
+      `DELETE FROM password_history WHERE user_id = $1 AND id NOT IN (
+        SELECT id FROM password_history WHERE user_id = $1 ORDER BY created_at DESC LIMIT 10
+      )`,
+      [req.user.userId]
+    );
+
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
