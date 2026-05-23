@@ -20,7 +20,7 @@ const TOKEN_KEY = 'fxlog:token';
 const USER_KEY  = 'fxlog:user';
 
 export default function App() {
-  const [mode, setMode] = useState(() => localStorage.getItem(MODE_KEY) || 'light');
+  const [mode, setMode] = useState(() => localStorage.getItem(MODE_KEY) || 'dark');
   const [tradeView, setTradeView] = useState(() => localStorage.getItem(VIEW_KEY) || 'list');
   const [nav, setNav] = useState(() => {
     try { return JSON.parse(localStorage.getItem(NAV_KEY)) || { screen: 'today', tradeId: null }; }
@@ -40,7 +40,18 @@ export default function App() {
 
   const changeLang = (l) => { setLang(l); localStorage.setItem(LANG_KEY, l); };
   const navigate = (screen, tradeId = null) => setNav({ screen, tradeId });
-  const toggleMode = (m) => setMode(typeof m === 'string' ? m : (prev => prev === 'light' ? 'dark' : 'light'));
+  const toggleMode = useCallback((m) => {
+    const newMode = typeof m === 'string' ? m : (mode === 'light' ? 'dark' : 'light');
+    setMode(newMode);
+    localStorage.setItem(MODE_KEY, newMode);
+    if (token) {
+      fetch(`${API}/auth/theme`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ theme: newMode }),
+      }).catch(() => {});
+    }
+  }, [mode, token]);
   const changeView = (v) => setTradeView(v);
 
   useEffect(() => { localStorage.setItem(MODE_KEY, mode); }, [mode]);
@@ -61,11 +72,29 @@ export default function App() {
     'Authorization': `Bearer ${token}`,
   }), [token]);
 
+  // On startup: load theme from server so it stays in sync across devices
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.theme) {
+          setMode(data.theme);
+          localStorage.setItem(MODE_KEY, data.theme);
+        }
+      })
+      .catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleAuth = (newToken, newUser) => {
     localStorage.setItem(TOKEN_KEY, newToken);
     localStorage.setItem(USER_KEY, JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
+    if (newUser.theme) {
+      setMode(newUser.theme);
+      localStorage.setItem(MODE_KEY, newUser.theme);
+    }
   };
 
   const handleSignOut = () => {
