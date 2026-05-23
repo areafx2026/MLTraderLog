@@ -47,7 +47,7 @@ export default function Sidebar({ t, screen, onNavigate, mode, onToggleMode, tra
       display: 'flex', flexDirection: 'column', gap: 32,
     }}>
       <img
-        src={mode === 'dark' ? '/lockup-dark.svg' : '/lockup-light.svg'}
+        src={mode === 'dark' ? '/lockup-dark.png' : '/lockup-light.png'}
         alt="FxLedger"
         style={{ height: 32, width: 'auto', display: 'block', alignSelf: 'flex-start', maxWidth: '100%' }}
       />
