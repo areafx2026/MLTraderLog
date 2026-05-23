@@ -153,7 +153,7 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
 
 app.put('/api/auth/theme', requireAuth, async (req, res) => {
   const { theme } = req.body;
-  if (!['light', 'dark'].includes(theme)) return res.status(400).json({ error: 'Invalid theme' });
+  if (!['light', 'dark', 'system'].includes(theme)) return res.status(400).json({ error: 'Invalid theme' });
   try {
     await pool.query('UPDATE users SET theme = $1 WHERE id = $2', [theme, req.user.userId]);
     res.json({ ok: true, theme });

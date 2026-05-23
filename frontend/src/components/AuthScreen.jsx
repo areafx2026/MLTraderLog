@@ -41,7 +41,7 @@ function Field({ t, label, type, value, onChange, onBlur, error, hint, badge }) 
   );
 }
 
-export default function AuthScreen({ t, onAuth, lang = 'en', mode = 'light', onToggleMode }) {
+export default function AuthScreen({ t, onAuth, lang = 'en', mode = 'dark', theme = 'dark', onSetTheme }) {
   const tr = createT(lang);
   const [view, setView] = useState('login');
 
@@ -154,9 +154,9 @@ export default function AuthScreen({ t, onAuth, lang = 'en', mode = 'light', onT
       fontFamily: FONTS.sans, position: 'relative',
     }}>
       {/* Theme toggle bottom-left */}
-      {onToggleMode && (
+      {onSetTheme && (
         <div style={{ position: 'absolute', bottom: 28, left: 28 }}>
-          <ModeToggle t={t} mode={mode} onToggle={onToggleMode} />
+          <ModeToggle t={t} theme={theme} onSetTheme={onSetTheme} />
         </div>
       )}
 

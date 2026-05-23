@@ -19,8 +19,17 @@ const NAV_KEY   = 'fxlog:nav';
 const TOKEN_KEY = 'fxlog:token';
 const USER_KEY  = 'fxlog:user';
 
+function getSystemMode() {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
 export default function App() {
-  const [mode, setMode] = useState(() => localStorage.getItem(MODE_KEY) || 'dark');
+  // theme = stored preference: 'dark' | 'light' | 'system'
+  // mode  = resolved for rendering: always 'dark' or 'light'
+  const [theme, setTheme] = useState(() => localStorage.getItem(MODE_KEY) || 'dark');
+  const [systemMode, setSystemMode] = useState(getSystemMode);
+  const mode = theme === 'system' ? systemMode : theme;
+
   const [tradeView, setTradeView] = useState(() => localStorage.getItem(VIEW_KEY) || 'list');
   const [nav, setNav] = useState(() => {
     try { return JSON.parse(localStorage.getItem(NAV_KEY)) || { screen: 'today', tradeId: null }; }
@@ -35,26 +44,34 @@ export default function App() {
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const t = THEMES[mode] || THEMES.light;
+  const t = THEMES[mode] || THEMES.dark;
   const tr = createT(lang);
+
+  // Listen for OS theme changes (only matters when theme === 'system')
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e) => setSystemMode(e.matches ? 'dark' : 'light');
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   const changeLang = (l) => { setLang(l); localStorage.setItem(LANG_KEY, l); };
   const navigate = (screen, tradeId = null) => setNav({ screen, tradeId });
-  const toggleMode = useCallback((m) => {
-    const newMode = typeof m === 'string' ? m : (mode === 'light' ? 'dark' : 'light');
-    setMode(newMode);
-    localStorage.setItem(MODE_KEY, newMode);
+
+  // setThemePref: saves preference, syncs to DB if logged in
+  const setThemePref = useCallback((newTheme) => {
+    setTheme(newTheme);
+    localStorage.setItem(MODE_KEY, newTheme);
     if (token) {
       fetch(`${API}/auth/theme`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ theme: newMode }),
+        body: JSON.stringify({ theme: newTheme }),
       }).catch(() => {});
     }
-  }, [mode, token]);
-  const changeView = (v) => setTradeView(v);
+  }, [token]);
 
-  useEffect(() => { localStorage.setItem(MODE_KEY, mode); }, [mode]);
+  const changeView = (v) => setTradeView(v);
   useEffect(() => { localStorage.setItem(VIEW_KEY, tradeView); }, [tradeView]);
   useEffect(() => {
     try { localStorage.setItem(NAV_KEY, JSON.stringify(nav)); } catch {}
@@ -72,47 +89,28 @@ export default function App() {
     'Authorization': `Bearer ${token}`,
   }), [token]);
 
-  // On startup: if stored token exists, sync theme — localStorage wins over DB
-  // (user may have toggled while logged out), but write back to DB if they differ.
+  // On startup: DB wins — load theme from server and apply it
   useEffect(() => {
     if (!token) return;
-    const localTheme = localStorage.getItem(MODE_KEY);
     fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (!data) return;
-        if (localTheme && localTheme !== data.theme) {
-          // Local choice wins — push it back to DB
-          fetch(`${API}/auth/theme`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ theme: localTheme }),
-          }).catch(() => {});
-        } else if (data.theme) {
-          // No local override — apply DB value
-          setMode(data.theme);
+        if (data?.theme) {
+          setTheme(data.theme);
           localStorage.setItem(MODE_KEY, data.theme);
         }
       })
       .catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // On login/register: DB wins — apply theme from server response
   const handleAuth = (newToken, newUser) => {
     localStorage.setItem(TOKEN_KEY, newToken);
     localStorage.setItem(USER_KEY, JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
-    // localStorage wins: if user toggled while logged out, keep that choice
-    // and write it back to the server; otherwise apply server theme.
-    const localTheme = localStorage.getItem(MODE_KEY);
-    if (localTheme && localTheme !== newUser.theme) {
-      fetch(`${API}/auth/theme`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${newToken}` },
-        body: JSON.stringify({ theme: localTheme }),
-      }).catch(() => {});
-    } else if (newUser.theme) {
-      setMode(newUser.theme);
+    if (newUser.theme) {
+      setTheme(newUser.theme);
       localStorage.setItem(MODE_KEY, newUser.theme);
     }
   };
@@ -179,7 +177,7 @@ export default function App() {
   }, [token, fetchTrades]);
 
   if (!token) {
-    return <AuthScreen t={t} onAuth={handleAuth} lang={lang} mode={mode} onToggleMode={toggleMode} />;
+    return <AuthScreen t={t} onAuth={handleAuth} lang={lang} mode={mode} theme={theme} onSetTheme={setThemePref} />;
   }
 
   const stats = computeStats(trades);
@@ -231,7 +229,7 @@ export default function App() {
       break;
     case 'settings':
       screen = (
-        <Settings t={t} mode={mode} onToggleMode={toggleMode}
+        <Settings t={t} mode={mode} theme={theme} onSetTheme={setThemePref}
           view={tradeView} onChangeView={changeView}
           user={user} onSignOut={handleSignOut}
           token={token} lang={lang} onChangeLang={changeLang} />
@@ -255,7 +253,8 @@ export default function App() {
         screen={nav.screen}
         onNavigate={(id) => navigate(id)}
         mode={mode}
-        onToggleMode={toggleMode}
+        theme={theme}
+        onSetTheme={setThemePref}
         trades={trades}
         user={user}
       />
