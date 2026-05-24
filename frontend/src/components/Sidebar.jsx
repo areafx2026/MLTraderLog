@@ -43,11 +43,12 @@ export default function Sidebar({ t, screen, onNavigate, mode, theme, onSetTheme
       width: 208, flexShrink: 0,
       padding: '36px 28px 28px',
       borderRight: `1px solid ${t.rule}`,
-      background: mode === 'dark' ? t.bg : t.paper,
+      background: t.isGlass ? t.pane : (mode === 'light' ? t.paper : t.bg),
       display: 'flex', flexDirection: 'column', gap: 32,
+      position: 'relative', zIndex: 1,
     }}>
       <img
-        src={mode === 'dark' ? '/lockup-dark.png' : '/lockup-light.png'}
+        src={mode === 'light' ? '/lockup-light.png' : '/lockup-dark.png'}
         alt="FxLedger"
         style={{ height: 32, width: 'auto', display: 'block', alignSelf: 'flex-start', maxWidth: '100%' }}
       />
@@ -149,6 +150,16 @@ const THEME_OPTIONS = [
       </svg>
     ),
   },
+  {
+    id: 'hyper',
+    label: 'Hyper',
+    icon: (
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none"
+        stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M8 1L3 8h4l-1 5 6-7H8L8 1z" />
+      </svg>
+    ),
+  },
 ];
 
 export function ModeToggle({ t, theme, onSetTheme }) {
@@ -161,13 +172,17 @@ export function ModeToggle({ t, theme, onSetTheme }) {
       }}>
       {THEME_OPTIONS.map(({ id, label, icon }) => {
         const on = theme === id;
+        const isHyperActive = on && id === 'hyper';
         return (
           <button key={id} onClick={() => onSetTheme(id)} aria-label={label}
+            title={label}
             style={{
               width: 30, height: 26, borderRadius: 999, border: 'none',
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              background: on ? t.ink : 'transparent',
-              color: on ? t.inkInk : t.ink2,
+              background: isHyperActive
+                ? 'linear-gradient(135deg, #a98bff, #5fdcf0)'
+                : on ? t.ink : 'transparent',
+              color: on ? (t.isGlass ? '#fff' : t.inkInk) : t.ink2,
               cursor: 'pointer',
               transition: 'background .18s, color .18s',
             }}>

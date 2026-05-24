@@ -33,6 +33,31 @@ export const THEMES = {
     inkInk:    '#171816',
     chartArea: 'rgba(154,184,145,0.16)',
   },
+  hyper: {
+    name: 'hyper',
+    bg:        '#0b0b14',
+    paper:     '#0f0f1a',
+    raised:    'rgba(255,255,255,.06)',
+    ink:       '#f1f1f5',
+    ink2:      '#9b9bb0',
+    ink3:      '#5c5c70',
+    rule:      'rgba(255,255,255,.07)',
+    rule2:     'rgba(255,255,255,.12)',
+    win:       '#5ee3b1',
+    loss:      '#ff6b8a',
+    accent:    '#a98bff',
+    accentInk: '#0b0b14',
+    inkInk:    '#0b0b14',
+    chartArea: 'rgba(169,139,255,0.18)',
+    // Hyper-specific extras (undefined in light/dark, safe to check with t.isGlass)
+    isGlass:         true,
+    pane:            'rgba(255,255,255,.04)',
+    pane2:           'rgba(255,255,255,.06)',
+    cyan:            '#5fdcf0',
+    violet:          '#a98bff',
+    gradientPrimary: 'linear-gradient(135deg, #a98bff, #5fdcf0)',
+    gradientText:    'linear-gradient(135deg, #f1f1f5 30%, #a98bff)',
+  },
 };
 
 export const FONTS = {

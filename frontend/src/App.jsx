@@ -78,11 +78,11 @@ export default function App() {
   }, [nav]);
 
   useEffect(() => {
-    document.body.style.background = mode === 'dark' ? t.bg : t.paper;
+    document.body.style.background = mode === 'light' ? t.paper : t.bg;
     document.body.style.color = t.ink;
     document.body.style.fontFamily = FONTS.sans;
     document.body.style.transition = 'background .2s, color .2s';
-  }, [t]);
+  }, [t, mode]);
 
   const authHeaders = useCallback(() => ({
     'Content-Type': 'application/json',
@@ -245,9 +245,24 @@ export default function App() {
   return (
     <div style={{
       width: '100vw', height: '100vh', display: 'flex',
-      background: mode === 'dark' ? t.bg : t.paper, color: t.ink, fontFamily: FONTS.sans,
-      fontSize: 14, overflow: 'hidden',
+      background: mode === 'light' ? t.paper : t.bg, color: t.ink, fontFamily: FONTS.sans,
+      fontSize: 14, overflow: 'hidden', position: 'relative',
     }}>
+      {/* Hyper gradient blooms */}
+      {mode === 'hyper' && (
+        <>
+          <div style={{
+            position: 'absolute', top: -240, right: -240, width: 640, height: 640,
+            borderRadius: '50%', pointerEvents: 'none', zIndex: 0,
+            background: 'radial-gradient(circle, rgba(169,139,255,0.13) 0%, transparent 68%)',
+          }} />
+          <div style={{
+            position: 'absolute', bottom: -240, left: 80, width: 560, height: 560,
+            borderRadius: '50%', pointerEvents: 'none', zIndex: 0,
+            background: 'radial-gradient(circle, rgba(95,220,240,0.09) 0%, transparent 68%)',
+          }} />
+        </>
+      )}
       <Sidebar
         t={t}
         screen={nav.screen}

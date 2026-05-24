@@ -41,13 +41,16 @@ function Seg({ t, value, options, onChange }) {
     }}>
       {options.map((o) => {
         const on = value === o.id;
+        const isHyperActive = on && o.id === 'hyper';
         return (
           <button key={o.id} onClick={() => onChange(o.id)}
             style={{
               padding: '6px 14px', borderRadius: 999, fontSize: 13,
               fontFamily: FONTS.sans, border: 'none', cursor: 'pointer',
-              background: on ? t.ink : 'transparent',
-              color: on ? t.inkInk : t.ink2,
+              background: isHyperActive
+                ? 'linear-gradient(135deg, #a98bff, #5fdcf0)'
+                : on ? t.ink : 'transparent',
+              color: on ? (t.isGlass ? '#fff' : t.inkInk) : t.ink2,
             }}>{o.label}</button>
         );
       })}
@@ -123,13 +126,14 @@ export default function Settings({ t, mode, theme, onSetTheme, view, onChangeVie
 
         <SectionLabel t={t}>Appearance</SectionLabel>
         <Row t={t} label="Theme"
-          sub="Linen by day, Dusk by night — or let your system decide."
+          sub="Linen by day, Dusk by night, Hyper for the purists."
           control={
             <Seg t={t} value={theme}
               options={[
                 { id: 'light', label: 'Linen' },
                 { id: 'system', label: 'Auto' },
                 { id: 'dark', label: 'Dusk' },
+                { id: 'hyper', label: 'Hyper' },
               ]}
               onChange={onSetTheme} />
           } />
