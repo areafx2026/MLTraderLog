@@ -150,20 +150,37 @@ export default function AuthScreen({ t, onAuth, lang = 'en', mode = 'dark', them
   return (
     <div style={{
       width: '100vw', height: '100vh',
-      background: mode === 'dark' ? t.bg : t.paper, display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: FONTS.sans, position: 'relative',
+      background: mode === 'light' ? t.paper : t.bg,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: FONTS.sans, position: 'relative', overflow: 'hidden',
     }}>
+      {/* Hyper gradient blooms */}
+      {t.isGlass && (
+        <>
+          <div style={{
+            position: 'absolute', top: -240, right: -240, width: 640, height: 640,
+            borderRadius: '50%', pointerEvents: 'none',
+            background: 'radial-gradient(circle, rgba(169,139,255,0.13) 0%, transparent 68%)',
+          }} />
+          <div style={{
+            position: 'absolute', bottom: -240, left: -240, width: 560, height: 560,
+            borderRadius: '50%', pointerEvents: 'none',
+            background: 'radial-gradient(circle, rgba(95,220,240,0.09) 0%, transparent 68%)',
+          }} />
+        </>
+      )}
+
       {/* Theme toggle bottom-left */}
       {onSetTheme && (
-        <div style={{ position: 'absolute', bottom: 28, left: 28 }}>
+        <div style={{ position: 'absolute', bottom: 28, left: 28, zIndex: 1 }}>
           <ModeToggle t={t} theme={theme} onSetTheme={onSetTheme} />
         </div>
       )}
 
-      <div style={{ width: 360 }}>
+      <div style={{ width: 360, position: 'relative', zIndex: 1 }}>
         <div style={{ overflow: 'hidden', marginBottom: 8 }}>
           <img
-            src={mode === 'dark' ? '/lockup-dark.png' : '/lockup-light.png'}
+            src={mode === 'light' ? '/lockup-light.png' : '/lockup-dark.png'}
             alt="FxLedger"
             style={{ width: '100%', display: 'block', transform: 'translateX(27px)' }}
           />
@@ -207,7 +224,8 @@ export default function AuthScreen({ t, onAuth, lang = 'en', mode = 'dark', them
             width: '100%', padding: '13px', fontSize: 14, fontFamily: FONTS.sans,
             fontWeight: 600, border: 'none', borderRadius: 999,
             cursor: (loading || usernameStatus === 'checking') ? 'wait' : 'pointer',
-            background: t.ink, color: t.bg,
+            background: t.gradientPrimary || t.ink,
+            color: t.gradientPrimary ? '#fff' : t.bg,
             opacity: (loading || usernameStatus === 'checking') ? 0.7 : 1,
           }}>
             {loading ? '…' : view === 'login' ? tr('auth.sign_in') : tr('auth.create_account')}

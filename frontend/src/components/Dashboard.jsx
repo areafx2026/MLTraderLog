@@ -129,8 +129,19 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
       {/* stats row */}
       <section style={{
         display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 48,
-        padding: '28px 0',
-        borderTop: `1px solid ${t.rule2}`, borderBottom: `1px solid ${t.rule}`,
+        ...(t.isGlass ? {
+          padding: '28px 32px',
+          background: t.pane,
+          border: `1px solid ${t.rule}`,
+          borderRadius: 18,
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          marginBottom: 28,
+        } : {
+          padding: '28px 0',
+          borderTop: `1px solid ${t.rule2}`,
+          borderBottom: `1px solid ${t.rule}`,
+        }),
       }}>
         <Stat t={t} label="Win rate"
           value={stats.totalClosed > 0 ? `${stats.winRate}%` : '—'}
@@ -147,7 +158,7 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
       </section>
 
       {/* recent trades */}
-      <section style={{ marginTop: 28 }}>
+      <section style={{ marginTop: t.isGlass ? 0 : 28 }}>
         <div style={{
           display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
           marginBottom: 14,
@@ -185,7 +196,7 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
                 color: 'inherit', fontFamily: 'inherit',
                 transition: 'background .12s',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = t.paper)}
+              onMouseEnter={(e) => (e.currentTarget.style.background = t.isGlass ? t.pane : t.paper)}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
               <span style={{ color: t.ink2, fontSize: 13 }}>{tr.date.slice(5)}</span>
               <span style={{
@@ -213,12 +224,14 @@ function PrimaryButton({ t, children, onClick }) {
   return (
     <button onClick={onClick}
       style={{
-        background: t.ink, color: t.inkInk, border: 'none',
+        background: t.gradientPrimary || t.ink,
+        color: t.gradientPrimary ? '#fff' : t.inkInk,
+        border: 'none',
         padding: '12px 22px', borderRadius: 999, fontFamily: FONTS.sans,
-        fontWeight: 500, fontSize: 14, letterSpacing: 0.1, cursor: 'pointer',
+        fontWeight: 600, fontSize: 14, letterSpacing: 0.1, cursor: 'pointer',
         whiteSpace: 'nowrap', flexShrink: 0,
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
+      onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.88')}
       onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}>
       {children}
     </button>
@@ -230,8 +243,9 @@ function Pnl({ t, pl }) {
   const txt = pl === 0 ? '—' : pl > 0 ? `+$${usd(pl)}` : `–$${usd(Math.abs(pl))}`;
   return (
     <span style={{
-      fontFamily: FONTS.serif, fontSize: 18, fontWeight: 500,
-      color, letterSpacing: -0.3,
+      fontFamily: t.isGlass ? FONTS.mono : FONTS.serif,
+      fontSize: 18, fontWeight: 500,
+      color, letterSpacing: t.isGlass ? 0 : -0.3,
     }}>{txt}</span>
   );
 }
