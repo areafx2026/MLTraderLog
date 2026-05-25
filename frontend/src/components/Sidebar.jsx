@@ -1,3 +1,4 @@
+import { getThemeAssets } from '../App.jsx';
 
 const NAV_ITEMS = [
   { id: 'today',    label: 'Today'    },
@@ -47,7 +48,7 @@ export default function Sidebar({ t, screen, onNavigate, resolvedMode, design, m
       position: 'relative', zIndex: 1,
     }}>
       <img
-        src={resolvedMode === 'light' ? '/lockup-light.png' : '/lockup-dark.png'}
+        src={getThemeAssets(design, resolvedMode).lockup}
         alt="FxLedger"
         style={{ height: 32, width: 'auto', display: 'block', alignSelf: 'flex-start', maxWidth: '100%' }}
       />

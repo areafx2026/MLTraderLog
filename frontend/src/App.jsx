@@ -24,6 +24,16 @@ function getSystemMode() {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
+// Returns the correct asset filenames for the current design + resolvedMode
+export function getThemeAssets(design, resolvedMode) {
+  const isHyper = design === 'hyper';
+  const isLight = resolvedMode === 'light';
+  if (isHyper && isLight) return { lockup: '/lockup-hyper-light.svg', favicon: '/favicon-hyper-light.svg' };
+  if (isHyper)            return { lockup: '/lockup-hyper-dark.svg',  favicon: '/favicon-hyper-dark.svg'  };
+  if (isLight)            return { lockup: '/lockup-light.svg',        favicon: '/favicon-light.svg'        };
+  return                         { lockup: '/lockup-dark.svg',         favicon: '/favicon-dark.svg'         };
+}
+
 export default function App() {
   // design: 'linen' | 'hyper'
   // mode:   stored preference — 'light' | 'dark' | 'system'
@@ -98,6 +108,13 @@ export default function App() {
     document.body.style.fontFamily = t.sans;
     document.body.style.transition = 'background .2s, color .2s';
   }, [t, resolvedMode]);
+
+  // Update favicon dynamically when design or mode changes
+  useEffect(() => {
+    const { favicon } = getThemeAssets(design, resolvedMode);
+    const el = document.getElementById('favicon-svg');
+    if (el) el.href = favicon;
+  }, [design, resolvedMode]);
 
   const authHeaders = useCallback(() => ({
     'Content-Type': 'application/json',
