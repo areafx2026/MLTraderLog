@@ -1,3 +1,9 @@
+export const FONTS = {
+  serif: '"Newsreader", "Source Serif Pro", Georgia, serif',
+  sans:  '"Inter", system-ui, sans-serif',
+  mono:  '"JetBrains Mono", ui-monospace, monospace',
+};
+
 export const THEMES = {
   light: {
     name: 'light',
@@ -67,10 +73,4 @@ export const THEMES = {
     gradientPrimary: 'linear-gradient(135deg, #a98bff, #5fdcf0)',
     gradientText:    'linear-gradient(135deg, #f1f1f5 30%, #a98bff)',
   },
-};
-
-export const FONTS = {
-  serif: '"Newsreader", "Source Serif Pro", Georgia, serif',
-  sans:  '"Inter", system-ui, sans-serif',
-  mono:  '"JetBrains Mono", ui-monospace, monospace',
 };
