@@ -1,9 +1,9 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 
 function SectionLabel({ t, children }) {
   return (
     <h2 style={{
-      fontFamily: t.seriftyle: 'italic'ize: 14,
+      fontFamily: t.serif, fontStyle: 'italic', fontSize: 14,
       color: t.ink2, fontWeight: 400, margin: '36px 0 4px', letterSpacing: 0.2,
     }}>{children}</h2>
   );
@@ -13,14 +13,14 @@ function Row({ t, label, value, sub }) {
   return (
     <div style={{ padding: '20px 0', borderBottom: `1px solid ${t.rule}` }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 16, marginBottom: 4 }}>
-        <div style={{ fontFamily: t.serifize: 18, color: t.ink, lineHeight: 1.2 }}>
+        <div style={{ fontFamily: t.serif, fontSize: 18, color: t.ink, lineHeight: 1.2 }}>
           {label}
         </div>
-        <div style={{ fontFamily: t.serifize: 15, color: t.ink, textAlign: 'right' }}>
+        <div style={{ fontFamily: t.serif, fontSize: 15, color: t.ink, textAlign: 'right' }}>
           {value}
         </div>
       </div>
-      <div style={{ fontSize: 13, color: t.ink2, fontFamily: t.seriftyle: 'italic' }}>
+      <div style={{ fontSize: 13, color: t.ink2, fontFamily: t.serif, fontStyle: 'italic' }}>
         {sub}
       </div>
     </div>
@@ -35,7 +35,7 @@ function Input({ t, value, onChange, type = 'text', placeholder }) {
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       style={{
-        padding: '9px 12px'ize: 14, fontFamily: t.sans,
+        padding: '9px 12px', fontSize: 14, fontFamily: t.sans,
         background: t.bg, color: t.ink, border: `1px solid ${t.rule2}`,
         borderRadius: 6, outline: 'none', width: 220, boxSizing: 'border-box',
       }}
@@ -49,7 +49,7 @@ function GhostButton({ t, children, onClick }) {
       background: 'transparent', color: t.ink2,
       border: `1px solid ${t.rule2}`,
       padding: '9px 16px', borderRadius: 999, fontFamily: t.sans,
-      fontWeight: 500ize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
+      fontWeight: 500, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
     }}>
       {children}
     </button>
@@ -105,13 +105,13 @@ export default function Profile({ t, user, token }) {
           width: 64, height: 64, borderRadius: '50%',
           background: t.accent, color: t.bg,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontFamily: t.sans, fontWeight: 700ize: 28, flexShrink: 0,
+          fontFamily: t.sans, fontWeight: 700, fontSize: 28, flexShrink: 0,
         }}>
           {initial}
         </div>
         <div>
           <h1 style={{
-            fontFamily: t.serif, fontWeight: 400ize: 44, margin: 0,
+            fontFamily: t.serif, fontWeight: 400, fontSize: 44, margin: 0,
             letterSpacing: -0.8, lineHeight: 1.05, color: t.ink,
           }}>{displayName}</h1>
           <div style={{ fontSize: 13, color: t.ink2, marginTop: 4 }}>{user?.email}</div>
@@ -127,7 +127,7 @@ export default function Profile({ t, user, token }) {
 
         <SectionLabel t={t}>Security</SectionLabel>
         <div style={{ padding: '20px 0', borderBottom: `1px solid ${t.rule}` }}>
-          <div style={{ fontFamily: t.serifize: 18, color: t.ink, marginBottom: 16 }}>
+          <div style={{ fontFamily: t.serif, fontSize: 18, color: t.ink, marginBottom: 16 }}>
             Change password
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 280 }}>

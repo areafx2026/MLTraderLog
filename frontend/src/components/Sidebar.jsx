@@ -1,4 +1,4 @@
-﻿
+
 const NAV_ITEMS = [
   { id: 'today',    label: 'Today'    },
   { id: 'trades',   label: 'Trades'   },
@@ -59,7 +59,7 @@ export default function Sidebar({ t, screen, onNavigate, mode, theme, onSetTheme
             <button key={item.id} onClick={() => onNavigate(item.id)}
               style={{
                 background: 'transparent', border: 'none', cursor: 'pointer',
-                fontFamily: t.sansize: 14, textAlign: 'left',
+                fontFamily: t.sans, fontSize: 14, textAlign: 'left',
                 color: active ? t.ink : t.ink2,
                 fontWeight: active ? 600 : 400,
                 padding: '7px 0 7px 12px', marginLeft: -12,
@@ -88,13 +88,13 @@ export default function Sidebar({ t, screen, onNavigate, mode, theme, onSetTheme
             width: 30, height: 30, borderRadius: '50%',
             background: t.accent, color: t.bg,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: t.sans, fontWeight: 700ize: 13,
+            fontFamily: t.sans, fontWeight: 700, fontSize: 13,
             flexShrink: 0,
           }}>
             {initial}
           </div>
           <span style={{
-            fontFamily: t.sansize: 12, color: t.ink2,
+            fontFamily: t.sans, fontSize: 12, color: t.ink2,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>
             {displayName}
@@ -104,7 +104,7 @@ export default function Sidebar({ t, screen, onNavigate, mode, theme, onSetTheme
         {/* Date + week info */}
         <div style={{
           fontSize: 12, color: t.ink3, lineHeight: 1.55,
-          fontFamily: t.seriftyle: 'italic',
+          fontFamily: t.serif, fontStyle: 'italic',
         }}>
           {dayName}, {dateOrd} of {monthName}.<br />
           {streakLine}

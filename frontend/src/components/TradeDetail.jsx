@@ -1,4 +1,4 @@
-﻿import { usd } from '../chartUtils.js';
+import { usd } from '../chartUtils.js';
 
 function TradeSchematicChart({ t, trade, height = 220 }) {
   const W = 760, H = height;
@@ -6,7 +6,7 @@ function TradeSchematicChart({ t, trade, height = 220 }) {
     return (
       <div style={{
         height: H, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: t.seriftyle: 'italic'ize: 14, color: t.ink3,
+        fontFamily: t.serif, fontStyle: 'italic', fontSize: 14, color: t.ink3,
       }}>
         Trade still open — no exit yet.
       </div>
@@ -55,7 +55,7 @@ function TradeSchematicChart({ t, trade, height = 220 }) {
 export default function TradeDetail({ t, trade, onBack, onEdit, onDelete }) {
   if (!trade) {
     return (
-      <div style={{ flex: 1, padding: '40px 72px', color: t.ink3, fontFamily: t.seriftyle: 'italic' }}>
+      <div style={{ flex: 1, padding: '40px 72px', color: t.ink3, fontFamily: t.serif, fontStyle: 'italic' }}>
         Trade not found.
       </div>
     );
@@ -116,13 +116,13 @@ export default function TradeDetail({ t, trade, onBack, onEdit, onDelete }) {
       }}>
         <div>
           <div style={{
-            fontFamily: t.seriftyle: 'italic', color: t.ink2,
+            fontFamily: t.serif, fontStyle: 'italic', color: t.ink2,
             fontSize: 14, marginBottom: 6,
           }}>
             Trade #{trade.id} · {trade.date.slice(5)}{trade.time && trade.time !== '00:00' ? ', ' + trade.time : ''}
           </div>
           <h1 style={{
-            fontFamily: t.serif, fontWeight: 400ize: 48, margin: 0,
+            fontFamily: t.serif, fontWeight: 400, fontSize: 48, margin: 0,
             letterSpacing: -0.8, lineHeight: 1, color: t.ink,
           }}>
             {trade.pair}{' '}
@@ -131,9 +131,8 @@ export default function TradeDetail({ t, trade, onBack, onEdit, onDelete }) {
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
           <div style={{
-            fontFamily: t.isGlass ? t.mono : t.serif,
-            fontWeight: t.isGlass ? 600 : 500ize: 44,
-            color: plColor, letterSpacing: t.isGlass ? -1.2 : -0.5, lineHeight: 1,
+            fontFamily: t.serif, fontWeight: 500, fontSize: 44,
+            color: plColor, letterSpacing: -0.5, lineHeight: 1,
           }}>
             {plText}
           </div>
@@ -149,11 +148,8 @@ export default function TradeDetail({ t, trade, onBack, onEdit, onDelete }) {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 48 }}>
         <div>
           <div style={{
-            background: t.isGlass ? t.pane : t.paper,
-            border: `1px solid ${t.rule}`,
-            borderRadius: t.isGlass ? 14 : 4,
-            padding: 24, marginBottom: 24,
-            ...(t.isGlass ? { backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' } : {}),
+            background: t.paper, border: `1px solid ${t.rule}`,
+            borderRadius: 4, padding: 24, marginBottom: 24,
           }}>
             <TradeSchematicChart t={t} trade={trade} height={220} />
           </div>
@@ -161,11 +157,11 @@ export default function TradeDetail({ t, trade, onBack, onEdit, onDelete }) {
           {trade.note && (
             <div>
               <div style={{
-                fontFamily: t.seriftyle: 'italic'ize: 14,
+                fontFamily: t.serif, fontStyle: 'italic', fontSize: 14,
                 color: t.ink2, marginBottom: 12,
               }}>Reflection</div>
               <p style={{
-                fontFamily: t.serifize: 19, lineHeight: 1.6, margin: 0,
+                fontFamily: t.serif, fontSize: 19, lineHeight: 1.6, margin: 0,
                 color: t.ink, maxWidth: '60ch',
               }}>
                 {trade.note}
@@ -181,13 +177,11 @@ export default function TradeDetail({ t, trade, onBack, onEdit, onDelete }) {
               borderBottom: `1px solid ${t.rule}`, paddingBottom: 10, gap: 12,
             }}>
               <span style={{
-                color: t.ink2, fontFamily: t.seriftyle: 'italic',
+                color: t.ink2, fontFamily: t.serif, fontStyle: 'italic',
                 fontSize: 13, whiteSpace: 'nowrap',
               }}>{k}</span>
               <span style={{
-                color: t.ink,
-                fontFamily: t.isGlass ? t.mono : t.serif,
-                fontWeight: 500,
+                color: t.ink, fontFamily: t.serif, fontWeight: 500,
                 fontSize: 13, whiteSpace: 'nowrap', textAlign: 'right',
               }}>{v}</span>
             </div>

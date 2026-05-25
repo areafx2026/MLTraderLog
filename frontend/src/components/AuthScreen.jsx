@@ -1,4 +1,4 @@
-﻿import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { createT } from '../i18n.js';
 import { ModeToggle } from './Sidebar.jsx';
 
@@ -12,7 +12,7 @@ function Field({ t, label, type, value, onChange, onBlur, error, hint, badge }) 
         }}>{label}</label>
         {badge && (
           <span style={{
-            fontSize: 11, fontFamily: t.seriftyle: 'italic',
+            fontSize: 11, fontFamily: t.serif, fontStyle: 'italic',
             color: badge.color,
           }}>{badge.text}</span>
         )}
@@ -24,7 +24,7 @@ function Field({ t, label, type, value, onChange, onBlur, error, hint, badge }) 
         onBlur={onBlur}
         style={{
           width: '100%', boxSizing: 'border-box',
-          padding: '12px 14px'ize: 14, fontFamily: t.sans,
+          padding: '12px 14px', fontSize: 14, fontFamily: t.sans,
           background: t.bg, color: t.ink,
           border: `1px solid ${error ? '#c0392b' : t.rule2}`,
           borderRadius: 6, outline: 'none',
@@ -34,7 +34,7 @@ function Field({ t, label, type, value, onChange, onBlur, error, hint, badge }) 
         <div style={{ fontSize: 12, color: '#c0392b', marginTop: 4 }}>{error}</div>
       )}
       {hint && !error && (
-        <div style={{ fontSize: 11, color: t.ink3, marginTop: 4tyle: 'italic' }}>{hint}</div>
+        <div style={{ fontSize: 11, color: t.ink3, marginTop: 4, fontStyle: 'italic' }}>{hint}</div>
       )}
     </div>
   );
@@ -185,7 +185,7 @@ export default function AuthScreen({ t, onAuth, lang = 'en', mode = 'dark', them
           />
         </div>
         <div style={{
-          fontFamily: t.seriftyle: 'italic'ize: 14,
+          fontFamily: t.serif, fontStyle: 'italic', fontSize: 14,
           color: t.ink2, textAlign: 'center', marginBottom: 40,
         }}>
           {view === 'login' ? tr('auth.tagline.login') : tr('auth.tagline.register')}
@@ -220,7 +220,7 @@ export default function AuthScreen({ t, onAuth, lang = 'en', mode = 'dark', them
           )}
 
           <button type="submit" disabled={loading || usernameStatus === 'checking'} style={{
-            width: '100%', padding: '13px'ize: 14, fontFamily: t.sans,
+            width: '100%', padding: '13px', fontSize: 14, fontFamily: t.sans,
             fontWeight: 600, border: 'none', borderRadius: 999,
             cursor: (loading || usernameStatus === 'checking') ? 'wait' : 'pointer',
             background: t.gradientPrimary || t.ink,
@@ -231,12 +231,12 @@ export default function AuthScreen({ t, onAuth, lang = 'en', mode = 'dark', them
           </button>
         </form>
 
-        <div style={{ marginTop: 24, textAlign: 'center'ize: 13, color: t.ink2 }}>
+        <div style={{ marginTop: 24, textAlign: 'center', fontSize: 13, color: t.ink2 }}>
           {view === 'login' ? (
             <>{tr('auth.no_account')}{' '}
               <button onClick={() => switchView('register')} style={{
                 background: 'none', border: 'none', color: t.ink,
-                cursor: 'pointer', fontFamily: t.sansize: 13,
+                cursor: 'pointer', fontFamily: t.sans, fontSize: 13,
                 textDecoration: 'underline', padding: 0,
               }}>{tr('auth.sign_up')}</button>
             </>
@@ -244,7 +244,7 @@ export default function AuthScreen({ t, onAuth, lang = 'en', mode = 'dark', them
             <>{tr('auth.already_registered')}{' '}
               <button onClick={() => switchView('login')} style={{
                 background: 'none', border: 'none', color: t.ink,
-                cursor: 'pointer', fontFamily: t.sansize: 13,
+                cursor: 'pointer', fontFamily: t.sans, fontSize: 13,
                 textDecoration: 'underline', padding: 0,
               }}>{tr('auth.sign_in')}</button>
             </>
