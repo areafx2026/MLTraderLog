@@ -94,7 +94,7 @@ app.post('/api/auth/register', async (req, res) => {
   try {
     const hash = await bcrypt.hash(password, 12);
     const result = await pool.query(
-      'INSERT INTO users (email, password_hash, username) VALUES ($1, $2, $3) RETURNING id, email, username, theme',
+      'INSERT INTO users (email, password_hash, username) VALUES ($1, $2, $3) RETURNING id, email, username, design, color_mode',
       [email.toLowerCase().trim(), hash, normalizedUsername]
     );
     const user = result.rows[0];
@@ -102,7 +102,7 @@ app.post('/api/auth/register', async (req, res) => {
       { userId: user.id, email: user.email, username: user.username },
       JWT_SECRET, { expiresIn: '30d' }
     );
-    res.status(201).json({ token, user: { id: user.id, email: user.email, username: user.username, theme: user.theme || 'dark' } });
+    res.status(201).json({ token, user: { id: user.id, email: user.email, username: user.username, design: user.design || 'linen', colorMode: user.color_mode || 'dark' } });
   } catch (err) {
     if (err.code === '23505') {
       if (err.constraint?.includes('username')) return res.status(409).json({ error: 'Username already taken' });
@@ -118,7 +118,7 @@ app.post('/api/auth/login', async (req, res) => {
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
   try {
     const result = await pool.query(
-      'SELECT id, email, username, password_hash, theme FROM users WHERE email = $1',
+      'SELECT id, email, username, password_hash, design, color_mode FROM users WHERE email = $1',
       [email.toLowerCase().trim()]
     );
     const user = result.rows[0];
@@ -129,7 +129,7 @@ app.post('/api/auth/login', async (req, res) => {
       { userId: user.id, email: user.email, username: user.username },
       JWT_SECRET, { expiresIn: '30d' }
     );
-    res.json({ token, user: { id: user.id, email: user.email, username: user.username, theme: user.theme || 'dark' } });
+    res.json({ token, user: { id: user.id, email: user.email, username: user.username, design: user.design || 'linen', colorMode: user.color_mode || 'dark' } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -139,24 +139,25 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/auth/me', requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, email, username, theme FROM users WHERE id = $1',
+      'SELECT id, email, username, design, color_mode FROM users WHERE id = $1',
       [req.user.userId]
     );
     if (!result.rows.length) return res.status(404).json({ error: 'User not found' });
     const u = result.rows[0];
-    res.json({ id: u.id, email: u.email, username: u.username, theme: u.theme || 'dark' });
+    res.json({ id: u.id, email: u.email, username: u.username, design: u.design || 'linen', colorMode: u.color_mode || 'dark' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-app.put('/api/auth/theme', requireAuth, async (req, res) => {
-  const { theme } = req.body;
-  if (!['light', 'dark', 'system', 'hyper'].includes(theme)) return res.status(400).json({ error: 'Invalid theme' });
+app.put('/api/auth/appearance', requireAuth, async (req, res) => {
+  const { design, mode } = req.body;
+  if (!['linen', 'hyper'].includes(design)) return res.status(400).json({ error: 'Invalid design' });
+  if (!['light', 'dark', 'system'].includes(mode)) return res.status(400).json({ error: 'Invalid mode' });
   try {
-    await pool.query('UPDATE users SET theme = $1 WHERE id = $2', [theme, req.user.userId]);
-    res.json({ ok: true, theme });
+    await pool.query('UPDATE users SET design = $1, color_mode = $2 WHERE id = $3', [design, mode, req.user.userId]);
+    res.json({ ok: true, design, colorMode: mode });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });

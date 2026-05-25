@@ -136,6 +136,7 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
           marginBottom: 28,
+          ...(t.shadowMd ? { boxShadow: t.shadowMd } : {}),
         } : {
           padding: '28px 0',
           borderTop: `1px solid ${t.rule2}`,
@@ -229,6 +230,7 @@ function PrimaryButton({ t, children, onClick }) {
         padding: '12px 22px', borderRadius: 999, fontFamily: t.sans,
         fontWeight: 600, fontSize: 14, letterSpacing: 0.1, cursor: 'pointer',
         whiteSpace: 'nowrap', flexShrink: 0,
+        ...(t.shadowGlow ? { boxShadow: t.shadowGlow } : {}),
       }}
       onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.88')}
       onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}>

@@ -5,8 +5,8 @@ export const FONTS = {
 };
 
 export const THEMES = {
-  light: {
-    name: 'light',
+  'linen-light': {
+    name: 'linen-light',
     serif: FONTS.serif,
     sans:  FONTS.sans,
     mono:  FONTS.mono,
@@ -25,8 +25,8 @@ export const THEMES = {
     inkInk:    '#fbf6ec',
     chartArea: 'rgba(107,127,94,0.20)',
   },
-  dark: {
-    name: 'dark',
+  'linen-dark': {
+    name: 'linen-dark',
     serif: FONTS.serif,
     sans:  FONTS.sans,
     mono:  FONTS.mono,
@@ -45,9 +45,9 @@ export const THEMES = {
     inkInk:    '#171816',
     chartArea: 'rgba(154,184,145,0.16)',
   },
-  hyper: {
-    name: 'hyper',
-    serif: FONTS.sans,   // Hyper hat kein Serif — alle „serif"-Slots werden Inter
+  'hyper-dark': {
+    name: 'hyper-dark',
+    serif: FONTS.sans,   // Hyper: kein Newsreader — alle „serif"-Slots = Inter
     sans:  FONTS.sans,
     mono:  FONTS.mono,
     bg:        '#0b0b14',
@@ -64,7 +64,7 @@ export const THEMES = {
     accentInk: '#0b0b14',
     inkInk:    '#0b0b14',
     chartArea: 'rgba(169,139,255,0.18)',
-    // Hyper-specific extras (undefined in light/dark, safe to check with t.isGlass)
+    // Hyper-specific extras
     isGlass:         true,
     pane:            'rgba(255,255,255,.04)',
     pane2:           'rgba(255,255,255,.06)',
@@ -72,5 +72,40 @@ export const THEMES = {
     violet:          '#a98bff',
     gradientPrimary: 'linear-gradient(135deg, #a98bff, #5fdcf0)',
     gradientText:    'linear-gradient(135deg, #f1f1f5 30%, #a98bff)',
+    bloomViolet:     'radial-gradient(circle, rgba(169,139,255,0.13) 0%, transparent 68%)',
+    bloomCyan:       'radial-gradient(circle, rgba(95,220,240,0.09) 0%, transparent 68%)',
+  },
+  'hyper-light': {
+    name: 'hyper-light',
+    serif: FONTS.sans,   // Hyper: kein Newsreader
+    sans:  FONTS.sans,
+    mono:  FONTS.mono,
+    // Convention: paper = page background in light mode (lighter surface)
+    bg:        '#eeeef5',   // sekundäre Fläche / hover
+    paper:     '#f5f5fa',   // Seiten-Hintergrund
+    raised:    'rgba(255,255,255,.95)',
+    ink:       '#14141c',
+    ink2:      '#5b5b6e',
+    ink3:      '#9a9aae',
+    rule:      'rgba(20,20,45,.06)',
+    rule2:     'rgba(20,20,45,.12)',
+    win:       '#10b981',
+    loss:      '#e11d48',
+    accent:    '#7c4dff',
+    accentInk: '#ffffff',
+    inkInk:    '#ffffff',
+    chartArea: 'rgba(124,77,255,0.12)',
+    // Hyper-specific extras
+    isGlass:         true,
+    pane:            'rgba(255,255,255,.7)',
+    pane2:           'rgba(255,255,255,.95)',
+    cyan:            '#06b6d4',
+    violet:          '#7c4dff',
+    gradientPrimary: 'linear-gradient(135deg, #7c4dff, #06b6d4)',
+    gradientText:    'linear-gradient(135deg, #14141c 30%, #7c4dff)',
+    shadowMd:        '0 1px 2px rgba(20,20,45,.04), 0 8px 24px rgba(20,20,45,.04)',
+    shadowGlow:      '0 4px 16px rgba(124, 77, 255, .20)',
+    bloomViolet:     'radial-gradient(circle, rgba(124,77,255,0.16) 0%, transparent 68%)',
+    bloomCyan:       'radial-gradient(circle, rgba(6,182,212,0.12) 0%, transparent 68%)',
   },
 };

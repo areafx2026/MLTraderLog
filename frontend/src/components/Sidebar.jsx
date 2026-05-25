@@ -16,7 +16,7 @@ const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'];
 
-export default function Sidebar({ t, screen, onNavigate, mode, theme, onSetTheme, trades, user }) {
+export default function Sidebar({ t, screen, onNavigate, resolvedMode, design, mode, onSetDesign, onSetMode, trades, user }) {
   const isActive = (id) =>
     screen === id || (id === 'trades' && (screen === 'detail' || screen === 'add'));
 
@@ -42,12 +42,12 @@ export default function Sidebar({ t, screen, onNavigate, mode, theme, onSetTheme
       width: 208, flexShrink: 0,
       padding: '36px 28px 28px',
       borderRight: `1px solid ${t.rule}`,
-      background: t.isGlass ? t.pane : (mode === 'light' ? t.paper : t.bg),
+      background: t.isGlass ? t.pane : (resolvedMode === 'light' ? t.paper : t.bg),
       display: 'flex', flexDirection: 'column', gap: 32,
       position: 'relative', zIndex: 1,
     }}>
       <img
-        src={mode === 'light' ? '/lockup-light.png' : '/lockup-dark.png'}
+        src={resolvedMode === 'light' ? '/lockup-light.png' : '/lockup-dark.png'}
         alt="FxLedger"
         style={{ height: 32, width: 'auto', display: 'block', alignSelf: 'flex-start', maxWidth: '100%' }}
       />
@@ -110,13 +110,76 @@ export default function Sidebar({ t, screen, onNavigate, mode, theme, onSetTheme
           {streakLine}
         </div>
 
-        <ModeToggle t={t} theme={theme} onSetTheme={onSetTheme} />
+        {/* Design toggle + Mode toggle */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <DesignToggle t={t} design={design} onSetDesign={onSetDesign} />
+          <ModeToggle t={t} mode={mode} onSetMode={onSetMode} />
+        </div>
       </div>
     </aside>
   );
 }
 
-const THEME_OPTIONS = [
+// ── Design toggle: Linen | Hyper ─────────────────────────────────────────────
+
+const DESIGN_OPTIONS = [
+  {
+    id: 'linen',
+    label: 'Linen',
+    icon: (
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none"
+        stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="2" width="10" height="10" rx="1" />
+        <path d="M2 5h10M5 5v7" />
+      </svg>
+    ),
+  },
+  {
+    id: 'hyper',
+    label: 'Hyper',
+    icon: (
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none"
+        stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M8 1L3 8h4l-1 5 6-7H8L8 1z" />
+      </svg>
+    ),
+  },
+];
+
+export function DesignToggle({ t, design, onSetDesign }) {
+  return (
+    <div aria-label="Design" role="group"
+      style={{
+        background: 'transparent', border: `1px solid ${t.rule2}`,
+        borderRadius: 999, padding: 3,
+        display: 'inline-flex', alignSelf: 'flex-start',
+      }}>
+      {DESIGN_OPTIONS.map(({ id, label, icon }) => {
+        const on = design === id;
+        const isHyperActive = on && id === 'hyper';
+        return (
+          <button key={id} onClick={() => onSetDesign(id)} aria-label={label} title={label}
+            style={{
+              width: 30, height: 26, borderRadius: 999, border: 'none',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              background: isHyperActive
+                ? (t.gradientPrimary || 'linear-gradient(135deg, #a98bff, #5fdcf0)')
+                : on ? t.ink : 'transparent',
+              color: on ? (t.isGlass ? '#fff' : t.inkInk) : t.ink2,
+              cursor: 'pointer',
+              transition: 'background .18s, color .18s',
+            }}>
+            {icon}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Mode toggle: Light | System | Dark ───────────────────────────────────────
+
+const MODE_OPTIONS = [
   {
     id: 'light',
     label: 'Light',
@@ -149,38 +212,24 @@ const THEME_OPTIONS = [
       </svg>
     ),
   },
-  {
-    id: 'hyper',
-    label: 'Hyper',
-    icon: (
-      <svg width="13" height="13" viewBox="0 0 14 14" fill="none"
-        stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M8 1L3 8h4l-1 5 6-7H8L8 1z" />
-      </svg>
-    ),
-  },
 ];
 
-export function ModeToggle({ t, theme, onSetTheme }) {
+export function ModeToggle({ t, mode, onSetMode }) {
   return (
-    <div aria-label="Theme" role="group"
+    <div aria-label="Mode" role="group"
       style={{
         background: 'transparent', border: `1px solid ${t.rule2}`,
         borderRadius: 999, padding: 3,
         display: 'inline-flex', alignSelf: 'flex-start',
       }}>
-      {THEME_OPTIONS.map(({ id, label, icon }) => {
-        const on = theme === id;
-        const isHyperActive = on && id === 'hyper';
+      {MODE_OPTIONS.map(({ id, label, icon }) => {
+        const on = mode === id;
         return (
-          <button key={id} onClick={() => onSetTheme(id)} aria-label={label}
-            title={label}
+          <button key={id} onClick={() => onSetMode(id)} aria-label={label} title={label}
             style={{
               width: 30, height: 26, borderRadius: 999, border: 'none',
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              background: isHyperActive
-                ? 'linear-gradient(135deg, #a98bff, #5fdcf0)'
-                : on ? t.ink : 'transparent',
+              background: on ? t.ink : 'transparent',
               color: on ? (t.isGlass ? '#fff' : t.inkInk) : t.ink2,
               cursor: 'pointer',
               transition: 'background .18s, color .18s',

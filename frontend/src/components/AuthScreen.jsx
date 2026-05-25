@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { createT } from '../i18n.js';
-import { ModeToggle } from './Sidebar.jsx';
+import { DesignToggle, ModeToggle } from './Sidebar.jsx';
 
 function Field({ t, label, type, value, onChange, onBlur, error, hint, badge }) {
   return (
@@ -40,7 +40,7 @@ function Field({ t, label, type, value, onChange, onBlur, error, hint, badge }) 
   );
 }
 
-export default function AuthScreen({ t, onAuth, lang = 'en', mode = 'dark', theme = 'dark', onSetTheme }) {
+export default function AuthScreen({ t, onAuth, lang = 'en', resolvedMode = 'dark', design = 'linen', mode = 'dark', onSetDesign, onSetMode }) {
   const tr = createT(lang);
   const [view, setView] = useState('login');
 
@@ -149,37 +149,38 @@ export default function AuthScreen({ t, onAuth, lang = 'en', mode = 'dark', them
   return (
     <div style={{
       width: '100vw', height: '100vh',
-      background: mode === 'light' ? t.paper : t.bg,
+      background: resolvedMode === 'light' ? t.paper : t.bg,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: t.sans, position: 'relative', overflow: 'hidden',
     }}>
-      {/* Hyper gradient blooms */}
-      {t.isGlass && (
+      {/* Gradient blooms (Hyper only) */}
+      {t.bloomViolet && (
         <>
           <div style={{
             position: 'absolute', top: -240, right: -240, width: 640, height: 640,
             borderRadius: '50%', pointerEvents: 'none',
-            background: 'radial-gradient(circle, rgba(169,139,255,0.13) 0%, transparent 68%)',
+            background: t.bloomViolet,
           }} />
           <div style={{
             position: 'absolute', bottom: -240, left: -240, width: 560, height: 560,
             borderRadius: '50%', pointerEvents: 'none',
-            background: 'radial-gradient(circle, rgba(95,220,240,0.09) 0%, transparent 68%)',
+            background: t.bloomCyan,
           }} />
         </>
       )}
 
-      {/* Theme toggle bottom-left */}
-      {onSetTheme && (
-        <div style={{ position: 'absolute', bottom: 28, left: 28, zIndex: 1 }}>
-          <ModeToggle t={t} theme={theme} onSetTheme={onSetTheme} />
+      {/* Design + Mode toggles bottom-left */}
+      {(onSetDesign || onSetMode) && (
+        <div style={{ position: 'absolute', bottom: 28, left: 28, zIndex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {onSetDesign && <DesignToggle t={t} design={design} onSetDesign={onSetDesign} />}
+          {onSetMode && <ModeToggle t={t} mode={mode} onSetMode={onSetMode} />}
         </div>
       )}
 
       <div style={{ width: 360, position: 'relative', zIndex: 1 }}>
         <div style={{ overflow: 'hidden', marginBottom: 8 }}>
           <img
-            src={mode === 'light' ? '/lockup-light.png' : '/lockup-dark.png'}
+            src={resolvedMode === 'light' ? '/lockup-light.png' : '/lockup-dark.png'}
             alt="FxLedger"
             style={{ width: '100%', display: 'block', transform: 'translateX(27px)' }}
           />

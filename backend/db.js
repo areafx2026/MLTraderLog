@@ -69,6 +69,14 @@ const initDb = async () => {
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(20)`,
       `CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users (lower(username)) WHERE username IS NOT NULL`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS theme VARCHAR(10) NOT NULL DEFAULT 'dark'`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS design VARCHAR(10) NOT NULL DEFAULT 'linen'`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS color_mode VARCHAR(10) NOT NULL DEFAULT 'dark'`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS design_migrated BOOLEAN NOT NULL DEFAULT FALSE`,
+      `UPDATE users SET
+        design = CASE WHEN theme = 'hyper' THEN 'hyper' ELSE 'linen' END,
+        color_mode = CASE WHEN theme = 'light' THEN 'light' WHEN theme = 'system' THEN 'system' ELSE 'dark' END,
+        design_migrated = TRUE
+       WHERE design_migrated = FALSE`,
       `CREATE TABLE IF NOT EXISTS password_history (
         id SERIAL PRIMARY KEY,
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
