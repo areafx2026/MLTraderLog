@@ -111,11 +111,6 @@ export default function Sidebar({ t, screen, onNavigate, resolvedMode, design, m
           {streakLine}
         </div>
 
-        {/* Design toggle + Mode toggle */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <DesignToggle t={t} design={design} onSetDesign={onSetDesign} />
-          <ModeToggle t={t} mode={mode} onSetMode={onSetMode} />
-        </div>
       </div>
     </aside>
   );
