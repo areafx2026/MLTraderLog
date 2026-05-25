@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { createT } from '../i18n.js';
 import { DesignToggle, ModeToggle } from './Sidebar.jsx';
+import { getThemeAssets } from '../App.jsx';
 
 function Field({ t, label, type, value, onChange, onBlur, error, hint, badge }) {
   return (
@@ -180,7 +181,7 @@ export default function AuthScreen({ t, onAuth, lang = 'en', resolvedMode = 'dar
       <div style={{ width: 360, position: 'relative', zIndex: 1 }}>
         <div style={{ overflow: 'hidden', marginBottom: 8 }}>
           <img
-            src={resolvedMode === 'light' ? '/lockup-light.png' : '/lockup-dark.png'}
+            src={getThemeAssets(design, resolvedMode).lockup}
             alt="FxLedger"
             style={{ width: '100%', display: 'block', transform: 'translateX(27px)' }}
           />
