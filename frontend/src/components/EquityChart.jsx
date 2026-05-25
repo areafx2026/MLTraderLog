@@ -1,5 +1,4 @@
-import { pathFor, areaFor } from '../chartUtils.js';
-import { FONTS } from '../theme.js';
+﻿import { pathFor, areaFor } from '../chartUtils.js';
 
 export default function EquityChart({ t, points, height = 220, withAxes = true }) {
   const W = 800, H = height;
@@ -9,7 +8,7 @@ export default function EquityChart({ t, points, height = 220, withAxes = true }
     return (
       <div style={{
         height: H, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: FONTS.serif, fontStyle: 'italic', fontSize: 14, color: t.ink3,
+        fontFamily: t.seriftyle: 'italic'ize: 14, color: t.ink3,
       }}>
         Log some trades to see your equity curve.
       </div>

@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { THEMES, FONTS } from './theme.js';
+﻿import { useState, useEffect, useCallback } from 'react';
+import { THEMES } from './theme.js';
 import { computeStats, computeEquity } from './chartUtils.js';
 import Sidebar from './components/Sidebar.jsx';
 import Dashboard from './components/Dashboard.jsx';
@@ -80,7 +80,7 @@ export default function App() {
   useEffect(() => {
     document.body.style.background = mode === 'light' ? t.paper : t.bg;
     document.body.style.color = t.ink;
-    document.body.style.fontFamily = FONTS.sans;
+    document.body.style.fontFamily = t.sans;
     document.body.style.transition = 'background .2s, color .2s';
   }, [t, mode]);
 
@@ -245,7 +245,7 @@ export default function App() {
   return (
     <div style={{
       width: '100vw', height: '100vh', display: 'flex',
-      background: mode === 'light' ? t.paper : t.bg, color: t.ink, fontFamily: FONTS.sans,
+      background: mode === 'light' ? t.paper : t.bg, color: t.ink, fontFamily: t.sans,
       fontSize: 14, overflow: 'hidden', position: 'relative',
     }}>
       {/* Hyper gradient blooms */}

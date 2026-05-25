@@ -1,6 +1,9 @@
 export const THEMES = {
   light: {
     name: 'light',
+    serif: FONTS.serif,
+    sans:  FONTS.sans,
+    mono:  FONTS.mono,
     bg:        '#f4ede1',
     paper:     '#fbf6ec',
     raised:    '#ffffff',
@@ -18,6 +21,9 @@ export const THEMES = {
   },
   dark: {
     name: 'dark',
+    serif: FONTS.serif,
+    sans:  FONTS.sans,
+    mono:  FONTS.mono,
     bg:        '#171816',
     paper:     '#1e211e',
     raised:    '#262a27',
@@ -35,6 +41,9 @@ export const THEMES = {
   },
   hyper: {
     name: 'hyper',
+    serif: FONTS.sans,   // Hyper hat kein Serif — alle „serif"-Slots werden Inter
+    sans:  FONTS.sans,
+    mono:  FONTS.mono,
     bg:        '#0b0b14',
     paper:     '#0f0f1a',
     raised:    'rgba(255,255,255,.06)',
