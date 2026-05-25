@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
 import { createT } from '../i18n.js';
-import { DesignToggle, ModeToggle } from './Sidebar.jsx';
 import { getThemeAssets } from '../App.jsx';
 
 function Field({ t, label, type, value, onChange, onBlur, error, hint, badge }) {
@@ -170,15 +169,8 @@ export default function AuthScreen({ t, onAuth, lang = 'en', resolvedMode = 'dar
         </>
       )}
 
-      {/* Design + Mode toggles bottom-left */}
-      {(onSetDesign || onSetMode) && (
-        <div style={{ position: 'absolute', bottom: 28, left: 28, zIndex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {onSetDesign && <DesignToggle t={t} design={design} onSetDesign={onSetDesign} />}
-          {onSetMode && <ModeToggle t={t} mode={mode} onSetMode={onSetMode} />}
-        </div>
-      )}
 
-      <div style={{ width: 360, position: 'relative', zIndex: 1 }}>
+<div style={{ width: 360, position: 'relative', zIndex: 1 }}>
         <div style={{ overflow: 'hidden', marginBottom: 8 }}>
           <img
             src={getThemeAssets(design, resolvedMode).lockup}
