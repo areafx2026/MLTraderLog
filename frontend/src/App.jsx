@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { THEMES } from './theme.js';
 import { computeStats, computeEquity } from './chartUtils.js';
 import Sidebar from './components/Sidebar.jsx';

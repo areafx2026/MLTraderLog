@@ -1,4 +1,4 @@
-﻿import { usd, formatDateLong } from '../chartUtils.js';
+import { usd, formatDateLong } from '../chartUtils.js';
 import EquityChart from './EquityChart.jsx';
 
 const RANGES = ['30 d', '3 mo', '1 yr', 'All'];
@@ -7,11 +7,11 @@ function Stat({ t, label, value, sub }) {
   return (
     <div>
       <div style={{
-        fontFamily: t.seriftyle: 'italic'ize: 12,
+        fontFamily: t.serif, fontStyle: 'italic', fontSize: 12,
         color: t.ink2, marginBottom: 8, letterSpacing: 0.2,
       }}>{label}</div>
       <div style={{
-        fontFamily: t.serifize: 34, fontWeight: 500,
+        fontFamily: t.serif, fontSize: 34, fontWeight: 500,
         letterSpacing: -0.5, lineHeight: 1, color: t.ink,
       }}>{value}</div>
       {sub && <div style={{ fontSize: 12, color: t.ink3, marginTop: 6 }}>{sub}</div>}
@@ -62,11 +62,11 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
       }}>
         <div>
           <div style={{
-            fontFamily: t.seriftyle: 'italic'ize: 14,
+            fontFamily: t.serif, fontStyle: 'italic', fontSize: 14,
             color: t.ink2, marginBottom: 8,
           }}>{eyebrow}</div>
           <h1 style={{
-            fontFamily: t.serif, fontWeight: 400ize: 44, margin: 0,
+            fontFamily: t.serif, fontWeight: 400, fontSize: 44, margin: 0,
             letterSpacing: -0.8, lineHeight: 1.05, color: t.ink,
           }}>
             {title}
@@ -85,14 +85,14 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
           alignItems: 'end', marginBottom: 18,
         }}>
           <div style={{
-            fontFamily: t.serifize: 16tyle: 'italic', color: t.ink2,
+            fontFamily: t.serif, fontSize: 16, fontStyle: 'italic', color: t.ink2,
           }}>
             Equity curve
           </div>
           {equity.length > 0 && (
             <div style={{ textAlign: 'center' }}>
               <div style={{
-                fontFamily: t.serifize: 36, fontWeight: 500,
+                fontFamily: t.serif, fontSize: 36, fontWeight: 500,
                 letterSpacing: -0.5, color: t.ink, lineHeight: 1,
               }}>
                 {totalPL >= 0 ? '+' : '–'}${usd(Math.abs(totalPL))}
@@ -102,7 +102,7 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
               </div>
             </div>
           )}
-          <div style={{ display: 'flex', gap: 16ize: 13, color: t.ink2, justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', gap: 16, fontSize: 13, color: t.ink2, justifyContent: 'flex-end' }}>
             {RANGES.map((r, i) => (
               <span key={r} style={{
                 color: i === 0 ? t.ink : t.ink3,
@@ -117,7 +117,7 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
           {loading ? (
             <div style={{
               height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: t.seriftyle: 'italic'ize: 14, color: t.ink3,
+              fontFamily: t.serif, fontStyle: 'italic', fontSize: 14, color: t.ink3,
             }}>Loading…</div>
           ) : (
             <EquityChart t={t} points={equity} height={220} />
@@ -163,12 +163,12 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
           marginBottom: 14,
         }}>
           <div style={{
-            fontFamily: t.serifize: 16tyle: 'italic', color: t.ink2,
+            fontFamily: t.serif, fontSize: 16, fontStyle: 'italic', color: t.ink2,
           }}>Recent</div>
           <button onClick={() => onNavigate('trades')}
             style={{
               background: 'transparent', border: 'none', cursor: 'pointer',
-              fontFamily: t.sansize: 13, color: t.accent,
+              fontFamily: t.sans, fontSize: 13, color: t.accent,
             }}>
             See all →
           </button>
@@ -176,7 +176,7 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
 
         {trades.length === 0 ? (
           <div style={{
-            padding: '32px 0', fontFamily: t.seriftyle: 'italic',
+            padding: '32px 0', fontFamily: t.serif, fontStyle: 'italic',
             fontSize: 16, color: t.ink3,
           }}>
             No trades logged yet.
@@ -197,15 +197,15 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
               }}
               onMouseEnter={(e) => (e.currentTarget.style.background = t.isGlass ? t.pane : t.paper)}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
-              <span style={{ color: t.ink2ize: 13 }}>{tr.date.slice(5)}</span>
+              <span style={{ color: t.ink2, fontSize: 13 }}>{tr.date.slice(5)}</span>
               <span style={{
-                fontFamily: t.serifize: 18, fontWeight: 500, color: t.ink,
+                fontFamily: t.serif, fontSize: 18, fontWeight: 500, color: t.ink,
               }}>{tr.pair}</span>
               <span style={{
-                color: t.ink2ize: 13tyle: 'italic', fontFamily: t.serif,
+                color: t.ink2, fontSize: 13, fontStyle: 'italic', fontFamily: t.serif,
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}>{tr.tag || tr.note?.slice(0, 40) || '—'}</span>
-              <span style={{ color: t.ink3ize: 13, textAlign: 'right' }}>
+              <span style={{ color: t.ink3, fontSize: 13, textAlign: 'right' }}>
                 {tr.pips > 0 ? '+' : ''}{tr.pips ? tr.pips + ' pips' : '—'}
               </span>
               <span style={{ textAlign: 'right' }}>
@@ -227,7 +227,7 @@ function PrimaryButton({ t, children, onClick }) {
         color: t.gradientPrimary ? '#fff' : t.inkInk,
         border: 'none',
         padding: '12px 22px', borderRadius: 999, fontFamily: t.sans,
-        fontWeight: 600ize: 14, letterSpacing: 0.1, cursor: 'pointer',
+        fontWeight: 600, fontSize: 14, letterSpacing: 0.1, cursor: 'pointer',
         whiteSpace: 'nowrap', flexShrink: 0,
       }}
       onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.88')}

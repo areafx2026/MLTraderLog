@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { LANGUAGES } from '../i18n.js';
 
 function Row({ t, label, sub, control }) {
@@ -8,13 +8,13 @@ function Row({ t, label, sub, control }) {
       padding: '20px 0', borderBottom: `1px solid ${t.rule}`,
     }}>
       <div style={{ flex: 1 }}>
-        <div style={{ fontFamily: t.serifize: 18, color: t.ink, lineHeight: 1.2 }}>
+        <div style={{ fontFamily: t.serif, fontSize: 18, color: t.ink, lineHeight: 1.2 }}>
           {label}
         </div>
         {sub && (
           <div style={{
             fontSize: 13, color: t.ink2, marginTop: 4,
-            fontFamily: t.seriftyle: 'italic',
+            fontFamily: t.serif, fontStyle: 'italic',
           }}>{sub}</div>
         )}
       </div>
@@ -26,7 +26,7 @@ function Row({ t, label, sub, control }) {
 function SectionLabel({ t, children }) {
   return (
     <h2 style={{
-      fontFamily: t.seriftyle: 'italic'ize: 14,
+      fontFamily: t.serif, fontStyle: 'italic', fontSize: 14,
       color: t.ink2, fontWeight: 400, margin: '36px 0 4px', letterSpacing: 0.2,
     }}>{children}</h2>
   );
@@ -44,7 +44,7 @@ function Seg({ t, value, options, onChange }) {
         return (
           <button key={o.id} onClick={() => onChange(o.id)}
             style={{
-              padding: '6px 14px', borderRadius: 999ize: 13,
+              padding: '6px 14px', borderRadius: 999, fontSize: 13,
               fontFamily: t.sans, border: 'none', cursor: 'pointer',
               background: isHyperActive
                 ? 'linear-gradient(135deg, #a98bff, #5fdcf0)'
@@ -85,7 +85,7 @@ function GhostButton({ t, children, onClick }) {
       style={{
         background: 'transparent', color: t.ink2, border: `1px solid ${t.rule2}`,
         padding: '11px 16px', borderRadius: 999, fontFamily: t.sans,
-        fontWeight: 500ize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
+        fontWeight: 500, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
       }}>
       {children}
     </button>
@@ -108,7 +108,7 @@ export default function Settings({ t, mode, theme, onSetTheme, view, onChangeVie
     <div style={{ flex: 1, padding: '40px 72px', overflow: 'auto', minWidth: 0 }}>
       <header style={{ marginBottom: 40 }}>
         <h1 style={{
-          fontFamily: t.serif, fontWeight: 400ize: 44, margin: 0,
+          fontFamily: t.serif, fontWeight: 400, fontSize: 44, margin: 0,
           letterSpacing: -0.8, lineHeight: 1.05, color: t.ink,
         }}>Settings</h1>
       </header>

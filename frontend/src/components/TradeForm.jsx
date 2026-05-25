@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 const MOODS = ['calm', 'focused', 'patient', 'rushed', 'distracted'];
 
@@ -14,7 +14,7 @@ function Field({ t, form, set, k, label, sub, placeholder }) {
   return (
     <div style={{ borderBottom: `1px solid ${t.rule2}`, paddingBottom: 14 }}>
       <div style={{
-        fontFamily: t.seriftyle: 'italic'ize: 12,
+        fontFamily: t.serif, fontStyle: 'italic', fontSize: 12,
         color: t.ink2, marginBottom: 8, letterSpacing: 0.2,
       }}>{label}</div>
       <input
@@ -23,7 +23,7 @@ function Field({ t, form, set, k, label, sub, placeholder }) {
         placeholder={placeholder || 'add'}
         style={{
           background: 'transparent', border: 'none', outline: 'none',
-          fontFamily: t.serifize: 26, letterSpacing: -0.3,
+          fontFamily: t.serif, fontSize: 26, letterSpacing: -0.3,
           width: '100%', padding: 0,
           color: form[k] ? t.ink : t.ink3,
           fontStyle: form[k] ? 'normal' : 'italic',
@@ -38,7 +38,7 @@ function SelectField({ t, form, set, k, label, options }) {
   return (
     <div style={{ borderBottom: `1px solid ${t.rule2}`, paddingBottom: 14 }}>
       <div style={{
-        fontFamily: t.seriftyle: 'italic'ize: 12,
+        fontFamily: t.serif, fontStyle: 'italic', fontSize: 12,
         color: t.ink2, marginBottom: 8, letterSpacing: 0.2,
       }}>{label}</div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -47,7 +47,7 @@ function SelectField({ t, form, set, k, label, options }) {
           return (
             <button key={o} onClick={() => set(k, o)}
               style={{
-                padding: '4px 12px', borderRadius: 999ize: 13,
+                padding: '4px 12px', borderRadius: 999, fontSize: 13,
                 fontFamily: t.sans, cursor: 'pointer',
                 border: `1px solid ${on ? t.ink : t.rule2}`,
                 background: on ? t.ink : 'transparent',
@@ -142,13 +142,13 @@ export default function TradeForm({ t, trade, onSave, onCancel }) {
       </button>
 
       <h1 style={{
-        fontFamily: t.serif, fontWeight: 400ize: 44,
+        fontFamily: t.serif, fontWeight: 400, fontSize: 44,
         margin: '0 0 6px', letterSpacing: -0.8, color: t.ink,
       }}>
         {isEdit ? 'Edit trade.' : 'A new trade.'}
       </h1>
       <p style={{
-        fontFamily: t.seriftyle: 'italic', color: t.ink2,
+        fontFamily: t.serif, fontStyle: 'italic', color: t.ink2,
         fontSize: 16, margin: '0 0 36px',
       }}>
         {isEdit ? 'Update the details below.' : 'Tell me about it.'}
@@ -174,7 +174,7 @@ export default function TradeForm({ t, trade, onSave, onCancel }) {
         marginTop: 28, paddingTop: 24, borderTop: `1px solid ${t.rule2}`, maxWidth: 820,
       }}>
         <div style={{
-          fontFamily: t.seriftyle: 'italic'ize: 12,
+          fontFamily: t.serif, fontStyle: 'italic', fontSize: 12,
           color: t.ink2, marginBottom: 12, letterSpacing: 0.2,
         }}>A few notes</div>
         <textarea
@@ -184,7 +184,7 @@ export default function TradeForm({ t, trade, onSave, onCancel }) {
           rows={4}
           style={{
             background: 'transparent', border: 'none', outline: 'none',
-            fontFamily: t.serifize: 19, lineHeight: 1.6, width: '100%',
+            fontFamily: t.serif, fontSize: 19, lineHeight: 1.6, width: '100%',
             resize: 'none', padding: 0,
             color: form.note ? t.ink : t.ink3,
             fontStyle: form.note ? 'normal' : 'italic',
@@ -197,26 +197,24 @@ export default function TradeForm({ t, trade, onSave, onCancel }) {
       }}>
         <button onClick={handleSave}
           style={{
-            background: t.gradientPrimary || t.ink,
-            color: t.gradientPrimary ? '#fff' : t.inkInk,
-            border: 'none',
+            background: t.ink, color: t.inkInk, border: 'none',
             padding: '12px 22px', borderRadius: 999, fontFamily: t.sans,
-            fontWeight: 600ize: 14, cursor: 'pointer',
+            fontWeight: 500, fontSize: 14, cursor: 'pointer',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.88')}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
           onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}>
           {isEdit ? 'Update trade' : 'Save trade'}
         </button>
         <button onClick={onCancel}
           style={{
             background: 'transparent', color: t.ink2, border: 'none',
-            padding: '12px 16px', fontFamily: t.sansize: 14, cursor: 'pointer',
+            padding: '12px 16px', fontFamily: t.sans, fontSize: 14, cursor: 'pointer',
           }}>
           Cancel
         </button>
         <span style={{
-          marginLeft: 'auto'ize: 11, color: t.ink3,
-          fontFamily: t.seriftyle: 'italic',
+          marginLeft: 'auto', fontSize: 11, color: t.ink3,
+          fontFamily: t.serif, fontStyle: 'italic',
         }}>⌘↵ to save</span>
       </div>
     </div>

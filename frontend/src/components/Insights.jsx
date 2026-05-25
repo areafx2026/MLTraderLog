@@ -1,4 +1,4 @@
-﻿import { usd, computeInsights, formatMonthYear } from '../chartUtils.js';
+import { usd, computeInsights, formatMonthYear } from '../chartUtils.js';
 import EquityChart from './EquityChart.jsx';
 
 export default function Insights({ t, trades, equity }) {
@@ -45,11 +45,11 @@ export default function Insights({ t, trades, equity }) {
     <div style={{ flex: 1, padding: '56px 72px 40px', overflow: 'auto', minWidth: 0 }}>
       <header style={{ marginBottom: 40 }}>
         <div style={{
-          fontFamily: t.seriftyle: 'italic'ize: 14,
+          fontFamily: t.serif, fontStyle: 'italic', fontSize: 14,
           color: t.ink2, marginBottom: 8,
         }}>{monthStr}</div>
         <h1 style={{
-          fontFamily: t.serif, fontWeight: 400ize: 44, margin: 0,
+          fontFamily: t.serif, fontWeight: 400, fontSize: 44, margin: 0,
           letterSpacing: -0.8, lineHeight: 1.05, color: t.ink,
         }}>
           Patterns,
@@ -60,28 +60,17 @@ export default function Insights({ t, trades, equity }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32 }}>
         {highlights.map((it) => (
-          <div key={it.label} style={t.isGlass ? {
-            background: t.pane,
-            border: `1px solid ${t.rule}`,
-            borderRadius: 14,
-            padding: '20px 24px',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-          } : {
-            borderTop: `1px solid ${t.rule2}`,
-            paddingTop: 16,
-          }}>
+          <div key={it.label} style={{ borderTop: `1px solid ${t.rule2}`, paddingTop: 16 }}>
             <div style={{
-              fontFamily: t.seriftyle: 'italic'ize: 13,
+              fontFamily: t.serif, fontStyle: 'italic', fontSize: 13,
               color: t.ink2, marginBottom: 10,
             }}>{it.label}</div>
             <div style={{
-              fontFamily: t.isGlass ? t.mono : t.serif,
-              fontSize: 30, fontWeight: t.isGlass ? 600 : 500,
-              letterSpacing: t.isGlass ? -0.8 : -0.4, lineHeight: 1.1, color: t.ink,
+              fontFamily: t.serif, fontSize: 30, fontWeight: 500,
+              letterSpacing: -0.4, lineHeight: 1.1, color: t.ink,
             }}>{it.big}</div>
             <div style={{
-              marginTop: 8, fontFamily: t.seriftyle: 'italic',
+              marginTop: 8, fontFamily: t.serif, fontStyle: 'italic',
               fontSize: 14,
               color: it.tone === 'win' ? t.win : it.tone === 'loss' ? t.loss : t.ink3,
             }}>{it.sub}</div>
@@ -91,7 +80,7 @@ export default function Insights({ t, trades, equity }) {
 
       <section style={{ marginTop: 56 }}>
         <div style={{
-          fontFamily: t.serifize: 16tyle: 'italic',
+          fontFamily: t.serif, fontSize: 16, fontStyle: 'italic',
           color: t.ink2, marginBottom: 12,
         }}>Equity curve</div>
         <EquityChart t={t} points={equity} height={260} />
@@ -99,7 +88,7 @@ export default function Insights({ t, trades, equity }) {
 
       {trades.length === 0 && (
         <div style={{
-          marginTop: 48, fontFamily: t.seriftyle: 'italic',
+          marginTop: 48, fontFamily: t.serif, fontStyle: 'italic',
           fontSize: 18, color: t.ink3, textAlign: 'center',
         }}>
           Log some trades and patterns will appear here.
