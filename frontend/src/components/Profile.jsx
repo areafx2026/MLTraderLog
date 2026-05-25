@@ -65,7 +65,7 @@ function StatusMsg({ ok, msg }) {
   );
 }
 
-export default function Profile({ t, user, token }) {
+export default function Profile({ t, user, token, onSignOut }) {
   const initial = ((user?.username || user?.email || '?')[0] || '?').toUpperCase();
   const displayName = user?.username || '';
 
@@ -142,6 +142,21 @@ export default function Profile({ t, user, token }) {
             </div>
           </div>
           <StatusMsg ok={pwStatus?.ok} msg={pwStatus?.msg} />
+        </div>
+
+        <SectionLabel t={t}>Session</SectionLabel>
+        <div style={{ padding: '20px 0', borderBottom: `1px solid ${t.rule}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+            <div>
+              <div style={{ fontFamily: t.serif, fontSize: 18, color: t.ink, lineHeight: 1.2 }}>
+                Sign out
+              </div>
+              <div style={{ fontSize: 13, color: t.ink2, marginTop: 4, fontFamily: t.serif, fontStyle: 'italic' }}>
+                See you tomorrow.
+              </div>
+            </div>
+            <GhostButton t={t} onClick={onSignOut}>Sign out</GhostButton>
+          </div>
         </div>
       </div>
     </div>

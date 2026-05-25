@@ -10,6 +10,7 @@ import Insights from './components/Insights.jsx';
 import Settings from './components/Settings.jsx';
 import AuthScreen from './components/AuthScreen.jsx';
 import Profile from './components/Profile.jsx';
+import DeleteAccount from './components/DeleteAccount.jsx';
 import { LANG_KEY, DEFAULT_LANG, createT } from './i18n.js';
 
 const API = '/api';
@@ -255,10 +256,18 @@ export default function App() {
     case 'profile':
       screen = (
         <Profile t={t} user={user} token={token}
+          onSignOut={handleSignOut}
           onUserUpdate={(updated) => {
             setUser(updated);
             localStorage.setItem(USER_KEY, JSON.stringify(updated));
           }} />
+      );
+      break;
+    case 'delete-account':
+      screen = (
+        <DeleteAccount t={t} token={token}
+          onCancel={() => navigate('settings')}
+          onDeleted={handleSignOut} />
       );
       break;
     case 'settings':
@@ -267,7 +276,7 @@ export default function App() {
           t={t} resolvedMode={resolvedMode} design={design} mode={mode}
           onSetDesign={setDesignPref} onSetMode={setModePref}
           view={tradeView} onChangeView={changeView}
-          user={user} onSignOut={handleSignOut}
+          user={user} onSignOut={handleSignOut} onNavigate={navigate}
           token={token} lang={lang} onChangeLang={changeLang}
         />
       );

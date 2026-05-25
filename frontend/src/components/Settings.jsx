@@ -92,7 +92,7 @@ function GhostButton({ t, children, onClick }) {
   );
 }
 
-export default function Settings({ t, resolvedMode, design, mode, onSetDesign, onSetMode, view, onChangeView, user, onSignOut, token, lang, onChangeLang }) {
+export default function Settings({ t, resolvedMode, design, mode, onSetDesign, onSetMode, view, onChangeView, user, onSignOut, onNavigate, token, lang, onChangeLang }) {
   const handleExport = () => {
     fetch('/api/export', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.blob())
@@ -178,9 +178,22 @@ export default function Settings({ t, resolvedMode, design, mode, onSetDesign, o
         <Row t={t} label="Export trades"
           sub="A CSV of everything you've logged."
           control={<GhostButton t={t} onClick={handleExport}>Export</GhostButton>} />
-        <Row t={t} label="Sign out"
-          sub="See you tomorrow."
-          control={<GhostButton t={t} onClick={onSignOut}>Sign out</GhostButton>} />
+        <Row t={t} label="Delete account"
+          sub="Permanently delete your account and all trade data."
+          control={
+            <button onClick={() => onNavigate('delete-account')}
+              style={{
+                background: 'transparent', color: t.loss,
+                border: `1px solid ${t.loss}`,
+                padding: '11px 16px', borderRadius: 999, fontFamily: t.sans,
+                fontWeight: 500, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
+                opacity: 0.8,
+              }}
+              onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+              onMouseLeave={e => (e.currentTarget.style.opacity = '0.8')}>
+              Delete account
+            </button>
+          } />
       </div>
     </div>
   );
