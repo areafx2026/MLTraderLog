@@ -40,14 +40,14 @@ function Seg({ t, value, options, onChange }) {
     }}>
       {options.map((o) => {
         const on = value === o.id;
-        const isHyperActive = on && o.id === 'hyper';
+        const useGradient = on && o.id === 'hyper' && t.gradientPrimary;
         return (
           <button key={o.id} onClick={() => onChange(o.id)}
             style={{
               padding: '6px 14px', borderRadius: 999, fontSize: 13,
               fontFamily: t.sans, border: 'none', cursor: 'pointer',
-              background: isHyperActive
-                ? 'linear-gradient(135deg, #a98bff, #5fdcf0)'
+              background: useGradient
+                ? t.gradientPrimary
                 : on ? t.ink : 'transparent',
               color: on ? (t.isGlass ? '#fff' : t.inkInk) : t.ink2,
             }}>{o.label}</button>
@@ -92,7 +92,7 @@ function GhostButton({ t, children, onClick }) {
   );
 }
 
-export default function Settings({ t, mode, theme, onSetTheme, view, onChangeView, user, onSignOut, token, lang, onChangeLang }) {
+export default function Settings({ t, resolvedMode, design, mode, onSetDesign, onSetMode, view, onChangeView, user, onSignOut, token, lang, onChangeLang }) {
   const handleExport = () => {
     fetch('/api/export', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.blob())
@@ -124,17 +124,26 @@ export default function Settings({ t, mode, theme, onSetTheme, view, onChangeVie
           } />
 
         <SectionLabel t={t}>Appearance</SectionLabel>
-        <Row t={t} label="Theme"
-          sub="Linen by day, Dusk by night, Hyper for the purists."
+        <Row t={t} label="Design"
+          sub="Linen: warm serif surfaces. Hyper: glass and gradient."
           control={
-            <Seg t={t} value={theme}
+            <Seg t={t} value={design}
               options={[
-                { id: 'light', label: 'Linen' },
-                { id: 'system', label: 'Auto' },
-                { id: 'dark', label: 'Dusk' },
+                { id: 'linen', label: 'Linen' },
                 { id: 'hyper', label: 'Hyper' },
               ]}
-              onChange={onSetTheme} />
+              onChange={onSetDesign} />
+          } />
+        <Row t={t} label="Mode"
+          sub="Light, dark, or follow your system setting."
+          control={
+            <Seg t={t} value={mode}
+              options={[
+                { id: 'light', label: 'Light' },
+                { id: 'system', label: 'Auto' },
+                { id: 'dark', label: 'Dark' },
+              ]}
+              onChange={onSetMode} />
           } />
         <Row t={t} label="Default trade view"
           sub="How Trades opens by default. You can always flip at the top."

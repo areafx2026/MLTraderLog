@@ -13,22 +13,27 @@ import Profile from './components/Profile.jsx';
 import { LANG_KEY, DEFAULT_LANG, createT } from './i18n.js';
 
 const API = '/api';
-const MODE_KEY  = 'fxlog:mode';
-const VIEW_KEY  = 'fxlog:view';
-const NAV_KEY   = 'fxlog:nav';
-const TOKEN_KEY = 'fxlog:token';
-const USER_KEY  = 'fxlog:user';
+const DESIGN_KEY = 'fxlog:design';
+const MODE_KEY   = 'fxlog:mode';
+const VIEW_KEY   = 'fxlog:view';
+const NAV_KEY    = 'fxlog:nav';
+const TOKEN_KEY  = 'fxlog:token';
+const USER_KEY   = 'fxlog:user';
 
 function getSystemMode() {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
 export default function App() {
-  // theme = stored preference: 'dark' | 'light' | 'system'
-  // mode  = resolved for rendering: always 'dark' or 'light'
-  const [theme, setTheme] = useState(() => localStorage.getItem(MODE_KEY) || 'dark');
+  // design: 'linen' | 'hyper'
+  // mode:   stored preference — 'light' | 'dark' | 'system'
+  // resolvedMode: always 'light' | 'dark' (used for rendering)
+  const [design, setDesign] = useState(() => localStorage.getItem(DESIGN_KEY) || 'linen');
+  const [mode, setMode]     = useState(() => localStorage.getItem(MODE_KEY)   || 'dark');
   const [systemMode, setSystemMode] = useState(getSystemMode);
-  const mode = theme === 'system' ? systemMode : theme;
+  const resolvedMode = mode === 'system' ? systemMode : mode;
+  const themeKey = `${design}-${resolvedMode}`;
+  const t = THEMES[themeKey] || THEMES['linen-dark'];
 
   const [tradeView, setTradeView] = useState(() => localStorage.getItem(VIEW_KEY) || 'list');
   const [nav, setNav] = useState(() => {
@@ -44,10 +49,9 @@ export default function App() {
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const t = THEMES[mode] || THEMES.dark;
   const tr = createT(lang);
 
-  // Listen for OS theme changes (only matters when theme === 'system')
+  // Listen for OS theme changes
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = (e) => setSystemMode(e.matches ? 'dark' : 'light');
@@ -58,18 +62,29 @@ export default function App() {
   const changeLang = (l) => { setLang(l); localStorage.setItem(LANG_KEY, l); };
   const navigate = (screen, tradeId = null) => setNav({ screen, tradeId });
 
-  // setThemePref: saves preference, syncs to DB if logged in
-  const setThemePref = useCallback((newTheme) => {
-    setTheme(newTheme);
-    localStorage.setItem(MODE_KEY, newTheme);
+  const setDesignPref = useCallback((newDesign) => {
+    setDesign(newDesign);
+    localStorage.setItem(DESIGN_KEY, newDesign);
     if (token) {
-      fetch(`${API}/auth/theme`, {
+      fetch(`${API}/auth/appearance`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ theme: newTheme }),
+        body: JSON.stringify({ design: newDesign, mode }),
       }).catch(() => {});
     }
-  }, [token]);
+  }, [token, mode]);
+
+  const setModePref = useCallback((newMode) => {
+    setMode(newMode);
+    localStorage.setItem(MODE_KEY, newMode);
+    if (token) {
+      fetch(`${API}/auth/appearance`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ design, mode: newMode }),
+      }).catch(() => {});
+    }
+  }, [token, design]);
 
   const changeView = (v) => setTradeView(v);
   useEffect(() => { localStorage.setItem(VIEW_KEY, tradeView); }, [tradeView]);
@@ -78,41 +93,37 @@ export default function App() {
   }, [nav]);
 
   useEffect(() => {
-    document.body.style.background = mode === 'light' ? t.paper : t.bg;
+    document.body.style.background = resolvedMode === 'light' ? t.paper : t.bg;
     document.body.style.color = t.ink;
     document.body.style.fontFamily = t.sans;
     document.body.style.transition = 'background .2s, color .2s';
-  }, [t, mode]);
+  }, [t, resolvedMode]);
 
   const authHeaders = useCallback(() => ({
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`,
   }), [token]);
 
-  // On startup: DB wins — load theme from server and apply it
+  // On startup: DB wins — load design+mode from server and apply
   useEffect(() => {
     if (!token) return;
     fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (data?.theme) {
-          setTheme(data.theme);
-          localStorage.setItem(MODE_KEY, data.theme);
-        }
+        if (data?.design) { setDesign(data.design); localStorage.setItem(DESIGN_KEY, data.design); }
+        if (data?.colorMode) { setMode(data.colorMode); localStorage.setItem(MODE_KEY, data.colorMode); }
       })
       .catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // On login/register: DB wins — apply theme from server response
+  // On login/register: apply design+mode from server response
   const handleAuth = (newToken, newUser) => {
     localStorage.setItem(TOKEN_KEY, newToken);
     localStorage.setItem(USER_KEY, JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
-    if (newUser.theme) {
-      setTheme(newUser.theme);
-      localStorage.setItem(MODE_KEY, newUser.theme);
-    }
+    if (newUser.design) { setDesign(newUser.design); localStorage.setItem(DESIGN_KEY, newUser.design); }
+    if (newUser.colorMode) { setMode(newUser.colorMode); localStorage.setItem(MODE_KEY, newUser.colorMode); }
   };
 
   const handleSignOut = () => {
@@ -177,7 +188,13 @@ export default function App() {
   }, [token, fetchTrades]);
 
   if (!token) {
-    return <AuthScreen t={t} onAuth={handleAuth} lang={lang} mode={mode} theme={theme} onSetTheme={setThemePref} />;
+    return (
+      <AuthScreen
+        t={t} onAuth={handleAuth} lang={lang}
+        resolvedMode={resolvedMode} design={design} mode={mode}
+        onSetDesign={setDesignPref} onSetMode={setModePref}
+      />
+    );
   }
 
   const stats = computeStats(trades);
@@ -229,10 +246,13 @@ export default function App() {
       break;
     case 'settings':
       screen = (
-        <Settings t={t} mode={mode} theme={theme} onSetTheme={setThemePref}
+        <Settings
+          t={t} resolvedMode={resolvedMode} design={design} mode={mode}
+          onSetDesign={setDesignPref} onSetMode={setModePref}
           view={tradeView} onChangeView={changeView}
           user={user} onSignOut={handleSignOut}
-          token={token} lang={lang} onChangeLang={changeLang} />
+          token={token} lang={lang} onChangeLang={changeLang}
+        />
       );
       break;
     default:
@@ -245,21 +265,22 @@ export default function App() {
   return (
     <div style={{
       width: '100vw', height: '100vh', display: 'flex',
-      background: mode === 'light' ? t.paper : t.bg, color: t.ink, fontFamily: t.sans,
+      background: resolvedMode === 'light' ? t.paper : t.bg,
+      color: t.ink, fontFamily: t.sans,
       fontSize: 14, overflow: 'hidden', position: 'relative',
     }}>
-      {/* Hyper gradient blooms */}
-      {mode === 'hyper' && (
+      {/* Gradient blooms (Hyper only) */}
+      {t.bloomViolet && (
         <>
           <div style={{
             position: 'absolute', top: -240, right: -240, width: 640, height: 640,
             borderRadius: '50%', pointerEvents: 'none', zIndex: 0,
-            background: 'radial-gradient(circle, rgba(169,139,255,0.13) 0%, transparent 68%)',
+            background: t.bloomViolet,
           }} />
           <div style={{
             position: 'absolute', bottom: -240, left: 80, width: 560, height: 560,
             borderRadius: '50%', pointerEvents: 'none', zIndex: 0,
-            background: 'radial-gradient(circle, rgba(95,220,240,0.09) 0%, transparent 68%)',
+            background: t.bloomCyan,
           }} />
         </>
       )}
@@ -267,9 +288,11 @@ export default function App() {
         t={t}
         screen={nav.screen}
         onNavigate={(id) => navigate(id)}
+        resolvedMode={resolvedMode}
+        design={design}
         mode={mode}
-        theme={theme}
-        onSetTheme={setThemePref}
+        onSetDesign={setDesignPref}
+        onSetMode={setModePref}
         trades={trades}
         user={user}
       />
