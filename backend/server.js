@@ -164,6 +164,17 @@ app.put('/api/auth/appearance', requireAuth, async (req, res) => {
   }
 });
 
+app.delete('/api/auth/account', requireAuth, async (req, res) => {
+  try {
+    // Cascade deletes trades + password_history via FK ON DELETE CASCADE
+    await pool.query('DELETE FROM users WHERE id = $1', [req.user.userId]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 app.put('/api/auth/email', requireAuth, async (req, res) => {
   const { newEmail, password } = req.body;
   if (!newEmail?.includes('@')) return res.status(400).json({ error: 'Invalid email address' });
