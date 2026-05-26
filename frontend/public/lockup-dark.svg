@@ -2,7 +2,7 @@
   <style>
     .wordmark { font-family: Georgia, "Times New Roman", serif; font-size: 54px; fill: #e9e3d4; }
     .fx       { font-weight: 700; }
-    .ledger   { font-weight: 400; }
+    .ledger   { font-weight: 400; font-style: italic; }
   </style>
 
   <g transform="translate(0, 10)">
