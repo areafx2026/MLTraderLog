@@ -129,7 +129,7 @@ app.post('/api/auth/register', async (req, res) => {
   const usernameErr = validateUsername(username);
   if (usernameErr) return res.status(400).json({ error: usernameErr });
   const normalizedUsername = normalizeUsername(username);
-  const safeDesign = ['linen', 'hyper'].includes(design) ? design : 'linen';
+  const safeDesign = ['linen', 'hyper'].includes(design) ? design : 'hyper';
   const safeMode   = ['light', 'dark', 'system'].includes(mode) ? mode : 'dark';
   try {
     const hash = await bcrypt.hash(password, 12);
@@ -149,7 +149,7 @@ app.post('/api/auth/register', async (req, res) => {
     );
     await sendVerificationEmail(user.email, code);
 
-    res.status(201).json({ requiresVerification: true, email: user.email });
+    res.status(201).json({ requiresVerification: true, email: user.email, design: safeDesign, mode: safeMode });
   } catch (err) {
     if (err.code === '23505') {
       if (err.constraint?.includes('username')) return res.status(409).json({ error: 'Username already taken' });
@@ -188,7 +188,7 @@ app.post('/api/auth/login', async (req, res) => {
       { userId: user.id, email: user.email, username: user.username },
       JWT_SECRET, { expiresIn: '30d' }
     );
-    res.json({ token, user: { id: user.id, email: user.email, username: user.username, design: user.design || 'linen', colorMode: user.color_mode || 'dark' } });
+    res.json({ token, user: { id: user.id, email: user.email, username: user.username, design: user.design || 'hyper', colorMode: user.color_mode || 'dark' } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -222,7 +222,7 @@ app.post('/api/auth/verify-email', async (req, res) => {
       { userId: user.id, email: user.email, username: user.username },
       JWT_SECRET, { expiresIn: '30d' }
     );
-    res.json({ token, user: { id: user.id, email: user.email, username: user.username, design: user.design || 'linen', colorMode: user.color_mode || 'dark' } });
+    res.json({ token, user: { id: user.id, email: user.email, username: user.username, design: user.design || 'hyper', colorMode: user.color_mode || 'dark' } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -276,7 +276,7 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
     );
     if (!result.rows.length) return res.status(404).json({ error: 'User not found' });
     const u = result.rows[0];
-    res.json({ id: u.id, email: u.email, username: u.username, design: u.design || 'linen', colorMode: u.color_mode || 'dark' });
+    res.json({ id: u.id, email: u.email, username: u.username, design: u.design || 'hyper', colorMode: u.color_mode || 'dark' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
