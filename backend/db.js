@@ -69,7 +69,7 @@ const initDb = async () => {
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(20)`,
       `CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users (lower(username)) WHERE username IS NOT NULL`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS theme VARCHAR(10) NOT NULL DEFAULT 'dark'`,
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS design VARCHAR(10) NOT NULL DEFAULT 'linen'`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS design VARCHAR(10) NOT NULL DEFAULT 'hyper'`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS color_mode VARCHAR(10) NOT NULL DEFAULT 'dark'`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS design_migrated BOOLEAN NOT NULL DEFAULT FALSE`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT TRUE`,

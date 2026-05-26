@@ -39,7 +39,7 @@ export default function App() {
   // design: 'linen' | 'hyper'
   // mode:   stored preference — 'light' | 'dark' | 'system'
   // resolvedMode: always 'light' | 'dark' (used for rendering)
-  const [design, setDesign] = useState(() => localStorage.getItem(DESIGN_KEY) || 'linen');
+  const [design, setDesign] = useState(() => localStorage.getItem(DESIGN_KEY) || 'hyper');
   const [mode, setMode]     = useState(() => localStorage.getItem(MODE_KEY)   || 'dark');
   const [systemMode, setSystemMode] = useState(getSystemMode);
   const resolvedMode = mode === 'system' ? systemMode : mode;
