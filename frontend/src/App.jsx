@@ -14,8 +14,6 @@ import DeleteAccount from './components/DeleteAccount.jsx';
 import { LANG_KEY, DEFAULT_LANG, createT } from './i18n.js';
 
 const API = '/api';
-const DESIGN_KEY = 'fxlog:design';
-const MODE_KEY   = 'fxlog:mode';
 const VIEW_KEY   = 'fxlog:view';
 const NAV_KEY    = 'fxlog:nav';
 const TOKEN_KEY  = 'fxlog:token';
@@ -39,8 +37,9 @@ export default function App() {
   // design: 'linen' | 'hyper'
   // mode:   stored preference — 'light' | 'dark' | 'system'
   // resolvedMode: always 'light' | 'dark' (used for rendering)
-  const [design, setDesign] = useState(() => localStorage.getItem(DESIGN_KEY) || 'hyper');
-  const [mode, setMode]     = useState(() => localStorage.getItem(MODE_KEY)   || 'dark');
+  // Theme: never stored locally — default is hyper/dark, DB wins on login
+  const [design, setDesign] = useState('hyper');
+  const [mode, setMode]     = useState('dark');
   const [systemMode, setSystemMode] = useState(getSystemMode);
   const resolvedMode = mode === 'system' ? systemMode : mode;
   const themeKey = `${design}-${resolvedMode}`;
@@ -75,7 +74,6 @@ export default function App() {
 
   const setDesignPref = useCallback((newDesign) => {
     setDesign(newDesign);
-    localStorage.setItem(DESIGN_KEY, newDesign);
     if (token) {
       fetch(`${API}/auth/appearance`, {
         method: 'PUT',
@@ -87,7 +85,6 @@ export default function App() {
 
   const setModePref = useCallback((newMode) => {
     setMode(newMode);
-    localStorage.setItem(MODE_KEY, newMode);
     if (token) {
       fetch(`${API}/auth/appearance`, {
         method: 'PUT',
@@ -128,8 +125,8 @@ export default function App() {
     fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (data?.design) { setDesign(data.design); localStorage.setItem(DESIGN_KEY, data.design); }
-        if (data?.colorMode) { setMode(data.colorMode); localStorage.setItem(MODE_KEY, data.colorMode); }
+        if (data?.design) setDesign(data.design);
+        if (data?.colorMode) setMode(data.colorMode);
       })
       .catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -140,18 +137,23 @@ export default function App() {
     localStorage.setItem(USER_KEY, JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
-    if (newUser.design) { setDesign(newUser.design); localStorage.setItem(DESIGN_KEY, newUser.design); }
-    if (newUser.colorMode) { setMode(newUser.colorMode); localStorage.setItem(MODE_KEY, newUser.colorMode); }
+    if (newUser.design) setDesign(newUser.design);
+    if (newUser.colorMode) setMode(newUser.colorMode);
   };
 
   const handleSignOut = () => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(NAV_KEY);
+    // Also clear any stale theme keys that might linger from older versions
+    localStorage.removeItem('fxlog:design');
+    localStorage.removeItem('fxlog:mode');
     setToken(null);
     setUser(null);
     setTrades([]);
     setNav({ screen: 'today', tradeId: null });
+    setDesign('hyper');
+    setMode('dark');
   };
 
   const handle401 = () => handleSignOut();
