@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { createT } from '../i18n.js';
 import { getThemeAssets } from '../App.jsx';
 
@@ -40,23 +40,106 @@ function Field({ t, label, type, value, onChange, onBlur, error, hint, badge }) 
   );
 }
 
-export default function AuthScreen({ t, onAuth, lang = 'en', resolvedMode = 'dark', design = 'linen', mode = 'dark', onSetDesign, onSetMode }) {
-  const tr = createT(lang);
-  const [view, setView] = useState('login');
+// ── 6-digit OTP input ─────────────────────────────────────────────────────────
 
-  // form state
+function OtpInput({ t, value, onChange }) {
+  const digits = (value + '      ').slice(0, 6).split('');
+  const refs = Array.from({ length: 6 }, () => useRef(null)); // eslint-disable-line react-hooks/rules-of-hooks
+
+  const update = (index, char) => {
+    const arr = (value + '      ').slice(0, 6).split('');
+    arr[index] = char.replace(/\D/g, '').slice(-1);
+    onChange(arr.join('').trimEnd());
+    if (char && index < 5) refs[index + 1].current?.focus();
+  };
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === 'Backspace') {
+      if (digits[index] === ' ' || digits[index] === '') {
+        if (index > 0) refs[index - 1].current?.focus();
+      } else {
+        const arr = (value + '      ').slice(0, 6).split('');
+        arr[index] = ' ';
+        onChange(arr.join('').trimEnd());
+      }
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      refs[index - 1].current?.focus();
+    } else if (e.key === 'ArrowRight' && index < 5) {
+      refs[index + 1].current?.focus();
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    onChange(pasted);
+    const focusIdx = Math.min(pasted.length, 5);
+    refs[focusIdx].current?.focus();
+  };
+
+  return (
+    <div style={{ display: 'flex', gap: 8, marginBottom: 28 }}>
+      {Array.from({ length: 6 }, (_, i) => (
+        <input
+          key={i}
+          ref={refs[i]}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          value={digits[i].trim()}
+          autoFocus={i === 0}
+          onChange={e => update(i, e.target.value)}
+          onKeyDown={e => handleKeyDown(i, e)}
+          onPaste={handlePaste}
+          onFocus={e => e.target.select()}
+          style={{
+            width: 44, height: 52, textAlign: 'center',
+            fontSize: 22, fontFamily: t.mono, fontWeight: 600,
+            background: t.bg, color: t.ink,
+            border: `1px solid ${digits[i].trim() ? t.accent : t.rule2}`,
+            borderRadius: 8, outline: 'none',
+            caretColor: 'transparent',
+            transition: 'border-color .12s',
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
+export default function AuthScreen({ t, onAuth, lang = 'en', resolvedMode = 'dark', design = 'linen', mode = 'dark' }) {
+  const tr = createT(lang);
+  const [view, setView] = useState('login'); // 'login' | 'register' | 'verify'
+
+  // login / register form state
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
 
   // username availability
-  const [usernameStatus, setUsernameStatus] = useState(null); // null | 'checking' | 'available' | 'taken' | 'error'
+  const [usernameStatus, setUsernameStatus] = useState(null);
   const debounceRef = useRef(null);
 
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // verify view state
+  const [verifyEmail, setVerifyEmail] = useState('');
+  const [otpValue, setOtpValue] = useState('');
+  const [verifyError, setVerifyError] = useState('');
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  // Countdown timer for resend
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
 
   const checkUsername = useCallback(async (value) => {
     const trimmed = value.trim();
@@ -109,7 +192,6 @@ export default function AuthScreen({ t, onAuth, lang = 'en', resolvedMode = 'dar
 
   const handleSubmit = async (ev) => {
     ev.preventDefault();
-    // If username check is still in flight, wait for it
     if (view === 'register' && usernameStatus === 'checking') return;
     const e = validate();
     if (Object.keys(e).length) { setErrors(e); return; }
@@ -120,14 +202,21 @@ export default function AuthScreen({ t, onAuth, lang = 'en', resolvedMode = 'dar
       const endpoint = view === 'login' ? '/api/auth/login' : '/api/auth/register';
       const body = view === 'login'
         ? { email, password }
-        : { email, password, username: username.trim() };
+        : { email, password, username: username.trim(), design, mode };
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) {
+      if (data.requiresVerification) {
+        // → go to verify view (from both register success and login with unverified account)
+        setVerifyEmail(data.email);
+        setOtpValue('');
+        setVerifyError('');
+        setResendCooldown(60);
+        setView('verify');
+      } else if (!res.ok) {
         setServerError(data.error || 'Authentication failed');
       } else {
         onAuth(data.token, data.user);
@@ -139,6 +228,49 @@ export default function AuthScreen({ t, onAuth, lang = 'en', resolvedMode = 'dar
     }
   };
 
+  const handleVerify = async () => {
+    const code = otpValue.replace(/\s/g, '');
+    if (code.length !== 6) { setVerifyError('Please enter the full 6-digit code.'); return; }
+    setVerifyError('');
+    setVerifyLoading(true);
+    try {
+      const res = await fetch('/api/auth/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: verifyEmail, code }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setVerifyError(data.error || 'Verification failed');
+      } else {
+        onAuth(data.token, data.user);
+      }
+    } catch {
+      setVerifyError(tr('auth.error.connection'));
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (resendCooldown > 0) return;
+    try {
+      const res = await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: verifyEmail }),
+      });
+      const data = await res.json();
+      if (res.status === 429) {
+        setResendCooldown(data.retryAfter || 60);
+      } else if (res.ok) {
+        setResendCooldown(60);
+        setOtpValue('');
+        setVerifyError('');
+      }
+    } catch { /* silent */ }
+  };
+
   const switchView = (v) => {
     setView(v);
     setErrors({});
@@ -146,6 +278,94 @@ export default function AuthScreen({ t, onAuth, lang = 'en', resolvedMode = 'dar
     setUsernameStatus(null);
   };
 
+  // ── Verify view ─────────────────────────────────────────────────────────────
+  if (view === 'verify') {
+    return (
+      <div style={{
+        width: '100vw', height: '100vh',
+        background: resolvedMode === 'light' ? t.paper : t.bg,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: t.sans, position: 'relative', overflow: 'hidden',
+      }}>
+        {t.bloomViolet && (
+          <>
+            <div style={{ position: 'absolute', top: -240, right: -240, width: 640, height: 640, borderRadius: '50%', pointerEvents: 'none', background: t.bloomViolet }} />
+            <div style={{ position: 'absolute', bottom: -240, left: -240, width: 560, height: 560, borderRadius: '50%', pointerEvents: 'none', background: t.bloomCyan }} />
+          </>
+        )}
+
+        <div style={{ width: 340, position: 'relative', zIndex: 1 }}>
+          <img
+            src={getThemeAssets(design, resolvedMode).lockup}
+            alt="FxLedger"
+            style={{ width: '100%', display: 'block', transform: 'translateX(27px)', marginBottom: 8 }}
+          />
+          <div style={{
+            fontFamily: t.serif, fontStyle: 'italic', fontSize: 14,
+            color: t.ink2, textAlign: 'center', marginBottom: 40,
+          }}>
+            Check your inbox.
+          </div>
+
+          <p style={{
+            fontSize: 14, color: t.ink2, marginBottom: 8, lineHeight: 1.6,
+            fontFamily: t.serif, fontStyle: 'italic',
+          }}>
+            We sent a 6-digit code to <strong style={{ fontStyle: 'normal', color: t.ink }}>{verifyEmail}</strong>.
+            Enter it below to confirm your email address.
+          </p>
+
+          <OtpInput t={t} value={otpValue} onChange={setOtpValue} />
+
+          {verifyError && (
+            <div style={{
+              fontSize: 13, color: '#c0392b', marginBottom: 16,
+              padding: '10px 14px', background: 'rgba(192,57,43,.08)', borderRadius: 6,
+            }}>{verifyError}</div>
+          )}
+
+          <button
+            onClick={handleVerify}
+            disabled={verifyLoading || otpValue.replace(/\s/g, '').length < 6}
+            style={{
+              width: '100%', padding: '13px', fontSize: 14, fontFamily: t.sans,
+              fontWeight: 600, border: 'none', borderRadius: 999,
+              cursor: (verifyLoading || otpValue.replace(/\s/g, '').length < 6) ? 'not-allowed' : 'pointer',
+              background: t.gradientPrimary || t.ink,
+              color: t.gradientPrimary ? '#fff' : t.bg,
+              opacity: (verifyLoading || otpValue.replace(/\s/g, '').length < 6) ? 0.5 : 1,
+              transition: 'opacity .15s',
+            }}>
+            {verifyLoading ? '…' : 'Confirm email'}
+          </button>
+
+          <div style={{ marginTop: 20, textAlign: 'center', fontSize: 13, color: t.ink2 }}>
+            <button onClick={handleResend} disabled={resendCooldown > 0}
+              style={{
+                background: 'none', border: 'none',
+                color: resendCooldown > 0 ? t.ink3 : t.ink,
+                cursor: resendCooldown > 0 ? 'default' : 'pointer',
+                fontFamily: t.sans, fontSize: 13, padding: 0,
+                textDecoration: resendCooldown > 0 ? 'none' : 'underline',
+              }}>
+              {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend code'}
+            </button>
+            <span style={{ margin: '0 10px', color: t.ink3 }}>·</span>
+            <button onClick={() => switchView('login')}
+              style={{
+                background: 'none', border: 'none', color: t.ink2,
+                cursor: 'pointer', fontFamily: t.sans, fontSize: 13,
+                padding: 0, textDecoration: 'underline',
+              }}>
+              Back to login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Login / Register view ───────────────────────────────────────────────────
   return (
     <div style={{
       width: '100vw', height: '100vh',
@@ -153,24 +373,14 @@ export default function AuthScreen({ t, onAuth, lang = 'en', resolvedMode = 'dar
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: t.sans, position: 'relative', overflow: 'hidden',
     }}>
-      {/* Gradient blooms (Hyper only) */}
       {t.bloomViolet && (
         <>
-          <div style={{
-            position: 'absolute', top: -240, right: -240, width: 640, height: 640,
-            borderRadius: '50%', pointerEvents: 'none',
-            background: t.bloomViolet,
-          }} />
-          <div style={{
-            position: 'absolute', bottom: -240, left: -240, width: 560, height: 560,
-            borderRadius: '50%', pointerEvents: 'none',
-            background: t.bloomCyan,
-          }} />
+          <div style={{ position: 'absolute', top: -240, right: -240, width: 640, height: 640, borderRadius: '50%', pointerEvents: 'none', background: t.bloomViolet }} />
+          <div style={{ position: 'absolute', bottom: -240, left: -240, width: 560, height: 560, borderRadius: '50%', pointerEvents: 'none', background: t.bloomCyan }} />
         </>
       )}
 
-
-<div style={{ width: 360, position: 'relative', zIndex: 1 }}>
+      <div style={{ width: 360, position: 'relative', zIndex: 1 }}>
         <div style={{ overflow: 'hidden', marginBottom: 8 }}>
           <img
             src={getThemeAssets(design, resolvedMode).lockup}

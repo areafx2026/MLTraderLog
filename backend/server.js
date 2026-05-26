@@ -6,7 +6,45 @@ const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
 const { pool, initDb, mapTrade } = require('./db');
+
+// ── Mailer ────────────────────────────────────────────────────────────────────
+
+const mailer = process.env.SMTP_HOST
+  ? nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    })
+  : null;
+
+function generateCode() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+async function sendVerificationEmail(email, code) {
+  if (!mailer) {
+    console.log(`[DEV] Verification code for ${email}: ${code}`);
+    return;
+  }
+  const from = process.env.SMTP_FROM || 'FxLedger <noreply@fxledger.app>';
+  await mailer.sendMail({
+    from,
+    to: email,
+    subject: 'Your FxLedger verification code',
+    text: `Your verification code is: ${code}\n\nThis code expires in 15 minutes. If you did not sign up for FxLedger, you can ignore this email.`,
+    html: `
+      <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:40px 24px">
+        <p style="font-size:14px;color:#6b6358;margin:0 0 24px">FxLedger</p>
+        <h1 style="font-size:28px;font-weight:400;color:#2a2620;margin:0 0 16px;letter-spacing:-0.5px">Verify your email</h1>
+        <p style="font-size:15px;color:#6b6358;margin:0 0 32px;line-height:1.6">Enter this code in FxLedger to confirm your email address. It expires in 15 minutes.</p>
+        <div style="font-size:36px;font-weight:600;letter-spacing:12px;color:#2a2620;padding:24px 32px;background:#fbf6ec;border-radius:10px;text-align:center">${code}</div>
+        <p style="font-size:13px;color:#a39c8e;margin:24px 0 0;line-height:1.5">If you did not sign up for FxLedger, you can safely ignore this email.</p>
+      </div>`,
+  });
+}
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -84,25 +122,34 @@ app.post('/api/auth/check-username', async (req, res) => {
 });
 
 app.post('/api/auth/register', async (req, res) => {
-  const { email, password, username } = req.body;
+  const { email, password, username, design, mode } = req.body;
   if (!email || !password || password.length < 8) {
     return res.status(400).json({ error: 'Email and password (min 8 chars) required' });
   }
   const usernameErr = validateUsername(username);
   if (usernameErr) return res.status(400).json({ error: usernameErr });
   const normalizedUsername = normalizeUsername(username);
+  const safeDesign = ['linen', 'hyper'].includes(design) ? design : 'linen';
+  const safeMode   = ['light', 'dark', 'system'].includes(mode) ? mode : 'dark';
   try {
     const hash = await bcrypt.hash(password, 12);
     const result = await pool.query(
-      'INSERT INTO users (email, password_hash, username) VALUES ($1, $2, $3) RETURNING id, email, username, design, color_mode',
-      [email.toLowerCase().trim(), hash, normalizedUsername]
+      `INSERT INTO users (email, password_hash, username, design, color_mode, email_verified)
+       VALUES ($1, $2, $3, $4, $5, FALSE) RETURNING id, email, username`,
+      [email.toLowerCase().trim(), hash, normalizedUsername, safeDesign, safeMode]
     );
     const user = result.rows[0];
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, username: user.username },
-      JWT_SECRET, { expiresIn: '30d' }
+
+    // Generate and store verification code (15 min expiry)
+    const code = generateCode();
+    await pool.query(
+      `INSERT INTO email_verifications (user_id, code, expires_at)
+       VALUES ($1, $2, NOW() + INTERVAL '15 minutes')`,
+      [user.id, code]
     );
-    res.status(201).json({ token, user: { id: user.id, email: user.email, username: user.username, design: user.design || 'linen', colorMode: user.color_mode || 'dark' } });
+    await sendVerificationEmail(user.email, code);
+
+    res.status(201).json({ requiresVerification: true, email: user.email });
   } catch (err) {
     if (err.code === '23505') {
       if (err.constraint?.includes('username')) return res.status(409).json({ error: 'Username already taken' });
@@ -118,18 +165,103 @@ app.post('/api/auth/login', async (req, res) => {
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
   try {
     const result = await pool.query(
-      'SELECT id, email, username, password_hash, design, color_mode FROM users WHERE email = $1',
+      'SELECT id, email, username, password_hash, design, color_mode, email_verified FROM users WHERE email = $1',
       [email.toLowerCase().trim()]
     );
     const user = result.rows[0];
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
+    if (!user.email_verified) {
+      // Resend a fresh code and prompt verification
+      const code = generateCode();
+      await pool.query('DELETE FROM email_verifications WHERE user_id = $1', [user.id]);
+      await pool.query(
+        `INSERT INTO email_verifications (user_id, code, expires_at)
+         VALUES ($1, $2, NOW() + INTERVAL '15 minutes')`,
+        [user.id, code]
+      );
+      await sendVerificationEmail(user.email, code);
+      return res.status(403).json({ requiresVerification: true, email: user.email });
+    }
     const token = jwt.sign(
       { userId: user.id, email: user.email, username: user.username },
       JWT_SECRET, { expiresIn: '30d' }
     );
     res.json({ token, user: { id: user.id, email: user.email, username: user.username, design: user.design || 'linen', colorMode: user.color_mode || 'dark' } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/auth/verify-email', async (req, res) => {
+  const { email, code } = req.body;
+  if (!email || !code) return res.status(400).json({ error: 'Email and code required' });
+  try {
+    const userRes = await pool.query(
+      'SELECT id, email, username, design, color_mode FROM users WHERE email = $1 AND email_verified = FALSE',
+      [email.toLowerCase().trim()]
+    );
+    if (!userRes.rows.length) return res.status(400).json({ error: 'Invalid or already verified' });
+    const user = userRes.rows[0];
+
+    const codeRes = await pool.query(
+      `SELECT id FROM email_verifications
+       WHERE user_id = $1 AND code = $2 AND expires_at > NOW()
+       ORDER BY created_at DESC LIMIT 1`,
+      [user.id, code.trim()]
+    );
+    if (!codeRes.rows.length) return res.status(400).json({ error: 'Invalid or expired code' });
+
+    // Mark verified, delete codes
+    await pool.query('UPDATE users SET email_verified = TRUE WHERE id = $1', [user.id]);
+    await pool.query('DELETE FROM email_verifications WHERE user_id = $1', [user.id]);
+
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, username: user.username },
+      JWT_SECRET, { expiresIn: '30d' }
+    );
+    res.json({ token, user: { id: user.id, email: user.email, username: user.username, design: user.design || 'linen', colorMode: user.color_mode || 'dark' } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/auth/resend-verification', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email required' });
+  try {
+    const userRes = await pool.query(
+      'SELECT id, email FROM users WHERE email = $1 AND email_verified = FALSE',
+      [email.toLowerCase().trim()]
+    );
+    if (!userRes.rows.length) return res.status(400).json({ error: 'Not found or already verified' });
+    const user = userRes.rows[0];
+
+    // Rate-limit: only allow resend if last code is older than 60 seconds
+    const recent = await pool.query(
+      `SELECT created_at FROM email_verifications WHERE user_id = $1
+       ORDER BY created_at DESC LIMIT 1`,
+      [user.id]
+    );
+    if (recent.rows.length) {
+      const ageSeconds = (Date.now() - new Date(recent.rows[0].created_at).getTime()) / 1000;
+      if (ageSeconds < 60) {
+        return res.status(429).json({ error: 'Please wait before requesting another code', retryAfter: Math.ceil(60 - ageSeconds) });
+      }
+    }
+
+    await pool.query('DELETE FROM email_verifications WHERE user_id = $1', [user.id]);
+    const code = generateCode();
+    await pool.query(
+      `INSERT INTO email_verifications (user_id, code, expires_at)
+       VALUES ($1, $2, NOW() + INTERVAL '15 minutes')`,
+      [user.id, code]
+    );
+    await sendVerificationEmail(user.email, code);
+    res.json({ ok: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });

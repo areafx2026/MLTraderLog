@@ -72,6 +72,15 @@ const initDb = async () => {
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS design VARCHAR(10) NOT NULL DEFAULT 'linen'`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS color_mode VARCHAR(10) NOT NULL DEFAULT 'dark'`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS design_migrated BOOLEAN NOT NULL DEFAULT FALSE`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT TRUE`,
+      `CREATE TABLE IF NOT EXISTS email_verifications (
+        id SERIAL PRIMARY KEY,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        code CHAR(6) NOT NULL,
+        expires_at TIMESTAMPTZ NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS email_verifications_user_id ON email_verifications (user_id)`,
       `UPDATE users SET
         design = CASE WHEN theme = 'hyper' THEN 'hyper' ELSE 'linen' END,
         color_mode = CASE WHEN theme = 'light' THEN 'light' WHEN theme = 'system' THEN 'system' ELSE 'dark' END,
