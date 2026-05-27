@@ -41,3 +41,52 @@ bash scripts/restore.sh \
 ## Backups-Ordner
 
 `./backups/` ist in `.gitignore` — SQL-Dumps und Archiv-Dateien landen nie im Repo.
+
+---
+
+## Lasttest
+
+### Vorbereitung
+
+In der `.env` auf dem Server `TEST_MODE=true` setzen:
+```bash
+echo "TEST_MODE=true" >> /var/www/fxledger/.env
+sudo docker compose restart backend
+```
+
+> **Achtung**: Danach wieder auf `false` setzen! TEST_MODE deaktiviert E-Mail-Verifizierung.
+
+### Fake-User und Trades generieren (Node.js)
+
+```bash
+# 20 User, je 50 Trades
+node scripts/seed.js --url https://fxledger.yourdomain.com --users 20 --trades 50
+
+# Testdaten danach löschen
+node scripts/seed.js --url https://fxledger.yourdomain.com --cleanup
+```
+
+### Lasttest mit k6 (100 simultane User)
+
+k6 installieren: https://k6.io/docs/get-started/installation/
+
+```bash
+# Standard: 100 VUs, 60 Sekunden
+k6 run --env BASE_URL=https://fxledger.yourdomain.com scripts/loadtest.js
+
+# Schneller Test mit weniger VUs
+k6 run --vus 10 --duration 30s --env BASE_URL=https://... scripts/loadtest.js
+```
+
+k6 gibt am Ende einen Report mit Latenz-Percentilen (p95, p99), Fehlerrate und Durchsatz.
+
+### Aufräumen nach dem Test
+
+```bash
+# Alle @loadtest.fake User löschen (via API)
+node scripts/seed.js --url https://... --cleanup
+
+# TEST_MODE wieder deaktivieren
+# In .env: TEST_MODE=false
+sudo docker compose restart backend
+```
