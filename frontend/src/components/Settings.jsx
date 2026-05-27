@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+
+const CURRENCIES = ['USD','EUR','GBP','JPY','CHF','AUD','CAD','NZD','SGD','HKD'];
 import { LANGUAGES } from '../i18n.js';
 
 function Row({ t, label, sub, control }) {
@@ -92,7 +94,33 @@ function GhostButton({ t, children, onClick }) {
   );
 }
 
-export default function Settings({ t, resolvedMode, design, mode, onSetDesign, onSetMode, view, onChangeView, user, onSignOut, onNavigate, token, lang, onChangeLang }) {
+export default function Settings({ t, resolvedMode, design, mode, onSetDesign, onSetMode, view, onChangeView, user, onSignOut, onNavigate, token, lang, onChangeLang, accountCurrency, accountBalance, onSaveAccount }) {
+  const [currency, setCurrency] = useState(accountCurrency || 'EUR');
+  const [balanceInput, setBalanceInput] = useState(String(accountBalance ?? 0));
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const savedTimer = useRef(null);
+
+  const handleSaveAccount = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch('/api/auth/account', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ currency, balance: parseFloat(balanceInput) || 0 }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        onSaveAccount(data.accountCurrency, data.accountBalance);
+        setSaved(true);
+        clearTimeout(savedTimer.current);
+        savedTimer.current = setTimeout(() => setSaved(false), 2000);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleExport = () => {
     fetch('/api/export', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.blob())
@@ -159,12 +187,52 @@ export default function Settings({ t, resolvedMode, design, mode, onSetDesign, o
             sub={user.email}
             control={null} />
         )}
-        <Row t={t} label="Display currency"
-          sub="All P&L is shown in the currency you log it in."
-          control={<GhostButton t={t}>Change</GhostButton>} />
-        <Row t={t} label="Risk per trade"
-          sub="Default risk target, applied as a guide when logging."
-          control={<GhostButton t={t}>Adjust</GhostButton>} />
+        <Row t={t} label="Account currency"
+          sub="The currency you trade and log P&L in."
+          control={
+            <select
+              value={currency}
+              onChange={e => setCurrency(e.target.value)}
+              style={{
+                background: t.isGlass ? t.pane : t.paper,
+                color: t.ink, border: `1px solid ${t.rule2}`,
+                borderRadius: 999, padding: '8px 14px', fontFamily: t.sans,
+                fontSize: 13, cursor: 'pointer', outline: 'none',
+              }}>
+              {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          } />
+        <Row t={t} label="Starting balance"
+          sub="Your account size. Changes to reflect deposits or withdrawals."
+          control={
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontFamily: t.sans, fontSize: 13, color: t.ink2 }}>{currency}</span>
+              <input
+                type="number"
+                value={balanceInput}
+                onChange={e => setBalanceInput(e.target.value)}
+                style={{
+                  background: t.isGlass ? t.pane : t.paper,
+                  color: t.ink, border: `1px solid ${t.rule2}`,
+                  borderRadius: 8, padding: '8px 12px', fontFamily: t.mono,
+                  fontSize: 13, outline: 'none', width: 120,
+                  textAlign: 'right',
+                }} />
+              <button
+                onClick={handleSaveAccount}
+                disabled={saving}
+                style={{
+                  background: saved ? t.win : (t.gradientPrimary || t.accent),
+                  color: '#fff', border: 'none',
+                  padding: '8px 16px', borderRadius: 999, fontFamily: t.sans,
+                  fontWeight: 500, fontSize: 13, cursor: saving ? 'default' : 'pointer',
+                  whiteSpace: 'nowrap', opacity: saving ? 0.6 : 1,
+                  transition: 'background .2s',
+                }}>
+                {saved ? 'Saved ✓' : saving ? '…' : 'Save'}
+              </button>
+            </div>
+          } />
 
         <SectionLabel t={t}>Journal</SectionLabel>
         <Row t={t} label="Evening prompt"

@@ -188,7 +188,7 @@ app.post('/api/auth/login', async (req, res) => {
       { userId: user.id, email: user.email, username: user.username },
       JWT_SECRET, { expiresIn: '30d' }
     );
-    res.json({ token, user: { id: user.id, email: user.email, username: user.username, design: user.design || 'hyper', colorMode: user.color_mode || 'dark' } });
+    res.json({ token, user: { id: user.id, email: user.email, username: user.username, design: user.design || 'hyper', colorMode: user.color_mode || 'dark', accountCurrency: user.account_currency || 'EUR', accountBalance: parseFloat(user.account_balance) || 0 } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -200,7 +200,7 @@ app.post('/api/auth/verify-email', async (req, res) => {
   if (!email || !code) return res.status(400).json({ error: 'Email and code required' });
   try {
     const userRes = await pool.query(
-      'SELECT id, email, username, design, color_mode FROM users WHERE email = $1 AND email_verified = FALSE',
+      'SELECT id, email, username, design, color_mode, account_currency, account_balance FROM users WHERE email = $1 AND email_verified = FALSE',
       [email.toLowerCase().trim()]
     );
     if (!userRes.rows.length) return res.status(400).json({ error: 'Invalid or already verified' });
@@ -222,7 +222,7 @@ app.post('/api/auth/verify-email', async (req, res) => {
       { userId: user.id, email: user.email, username: user.username },
       JWT_SECRET, { expiresIn: '30d' }
     );
-    res.json({ token, user: { id: user.id, email: user.email, username: user.username, design: user.design || 'hyper', colorMode: user.color_mode || 'dark' } });
+    res.json({ token, user: { id: user.id, email: user.email, username: user.username, design: user.design || 'hyper', colorMode: user.color_mode || 'dark', accountCurrency: user.account_currency || 'EUR', accountBalance: parseFloat(user.account_balance) || 0 } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -271,12 +271,17 @@ app.post('/api/auth/resend-verification', async (req, res) => {
 app.get('/api/auth/me', requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, email, username, design, color_mode FROM users WHERE id = $1',
+      'SELECT id, email, username, design, color_mode, account_currency, account_balance FROM users WHERE id = $1',
       [req.user.userId]
     );
     if (!result.rows.length) return res.status(404).json({ error: 'User not found' });
     const u = result.rows[0];
-    res.json({ id: u.id, email: u.email, username: u.username, design: u.design || 'hyper', colorMode: u.color_mode || 'dark' });
+    res.json({
+      id: u.id, email: u.email, username: u.username,
+      design: u.design || 'hyper', colorMode: u.color_mode || 'dark',
+      accountCurrency: u.account_currency || 'EUR',
+      accountBalance: parseFloat(u.account_balance) || 0,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -290,6 +295,24 @@ app.put('/api/auth/appearance', requireAuth, async (req, res) => {
   try {
     await pool.query('UPDATE users SET design = $1, color_mode = $2 WHERE id = $3', [design, mode, req.user.userId]);
     res.json({ ok: true, design, colorMode: mode });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.put('/api/auth/account', requireAuth, async (req, res) => {
+  const { currency, balance } = req.body;
+  const CURRENCIES = ['USD','EUR','GBP','JPY','CHF','AUD','CAD','NZD','SGD','HKD'];
+  if (!CURRENCIES.includes(currency)) return res.status(400).json({ error: 'Invalid currency' });
+  const bal = parseFloat(balance);
+  if (isNaN(bal)) return res.status(400).json({ error: 'Invalid balance' });
+  try {
+    await pool.query(
+      'UPDATE users SET account_currency = $1, account_balance = $2 WHERE id = $3',
+      [currency, bal, req.user.userId]
+    );
+    res.json({ ok: true, accountCurrency: currency, accountBalance: bal });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -392,11 +415,11 @@ function calcRR(pips, entryPrice, slPrice, pair) {
   return riskPips > 0 ? Math.round((pips / riskPips) * 10) / 10 : 0;
 }
 
-function calcStatus(resultEur, exitPrice, pips) {
+function calcStatus(resultAmount, exitPrice, pips) {
   const hasExit = exitPrice && parseFloat(exitPrice) > 0;
-  if (!hasExit && (resultEur === null || resultEur === undefined || resultEur === '')) return 'OPEN';
-  const pl = resultEur !== null && resultEur !== undefined && resultEur !== ''
-    ? parseFloat(resultEur)
+  if (!hasExit && (resultAmount === null || resultAmount === undefined || resultAmount === '')) return 'OPEN';
+  const pl = resultAmount !== null && resultAmount !== undefined && resultAmount !== ''
+    ? parseFloat(resultAmount)
     : pips;
   if (pl > 0) return 'WIN';
   if (pl < 0) return 'LOSS';
@@ -439,13 +462,13 @@ app.post('/api/trades', requireAuth, async (req, res) => {
   const {
     pair, direction, trade_date, trade_time,
     entry_price, exit_price, sl_price, lot_size,
-    tag, mood, notes, result_eur,
+    tag, mood, notes, result_amount,
   } = req.body;
 
   const dir = (direction || 'LONG').toUpperCase();
   const pips = calcPips(pair, dir, entry_price, exit_price);
   const rr = calcRR(pips, entry_price, sl_price, pair);
-  const status = calcStatus(result_eur, exit_price, pips);
+  const status = calcStatus(result_amount, exit_price, pips);
 
   try {
     const result = await pool.query(`
@@ -453,7 +476,7 @@ app.post('/api/trades', requireAuth, async (req, res) => {
         user_id, pair, trade_date, trade_time, direction,
         entry_price, exit_price, sl_price, lot_size,
         pips, rr_multiple, tag, mood, notes,
-        result_eur, result_status
+        result_amount, result_status
       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
       RETURNING *
     `, [
@@ -463,7 +486,7 @@ app.post('/api/trades', requireAuth, async (req, res) => {
       lot_size || null,
       pips || null, rr || null,
       tag || null, mood || null, notes || null,
-      result_eur !== '' ? result_eur || null : null,
+      result_amount !== '' ? result_amount || null : null,
       status,
     ]);
     res.status(201).json(mapTrade(result.rows[0]));
@@ -479,13 +502,13 @@ app.put('/api/trades/:id', requireAuth, async (req, res) => {
   const {
     pair, direction, trade_date, trade_time,
     entry_price, exit_price, sl_price, lot_size,
-    tag, mood, notes, result_eur,
+    tag, mood, notes, result_amount,
   } = req.body;
 
   const dir = (direction || 'LONG').toUpperCase();
   const pips = calcPips(pair, dir, entry_price, exit_price);
   const rr = calcRR(pips, entry_price, sl_price, pair);
-  const status = calcStatus(result_eur, exit_price, pips);
+  const status = calcStatus(result_amount, exit_price, pips);
 
   try {
     const result = await pool.query(`
@@ -493,7 +516,7 @@ app.put('/api/trades/:id', requireAuth, async (req, res) => {
         pair=$1, trade_date=$2, trade_time=$3, direction=$4,
         entry_price=$5, exit_price=$6, sl_price=$7, lot_size=$8,
         pips=$9, rr_multiple=$10, tag=$11, mood=$12, notes=$13,
-        result_eur=$14, result_status=$15
+        result_amount=$14, result_status=$15
       WHERE id=$16 AND user_id=$17 RETURNING *
     `, [
       pair, trade_date, trade_time || null, dir,
@@ -501,7 +524,7 @@ app.put('/api/trades/:id', requireAuth, async (req, res) => {
       lot_size || null,
       pips || null, rr || null,
       tag || null, mood || null, notes || null,
-      result_eur !== '' ? result_eur || null : null,
+      result_amount !== '' ? result_amount || null : null,
       status,
       req.params.id, req.user.userId,
     ]);
@@ -548,9 +571,9 @@ app.get('/api/stats', requireAuth, async (req, res) => {
         COUNT(*) FILTER (WHERE result_status = 'LOSS') AS losses,
         COUNT(*) FILTER (WHERE result_status = 'BE') AS breakevens,
         COUNT(*) FILTER (WHERE result_status = 'OPEN') AS open_trades,
-        COALESCE(SUM(result_eur) FILTER (WHERE result_status != 'OPEN'), 0) AS total_pnl,
+        COALESCE(SUM(result_amount) FILTER (WHERE result_status != 'OPEN'), 0) AS total_pnl,
         COALESCE(AVG(rr_multiple) FILTER (WHERE result_status = 'WIN'), 0) AS avg_rr,
-        COALESCE(SUM(result_eur) FILTER (
+        COALESCE(SUM(result_amount) FILTER (
           WHERE result_status != 'OPEN'
           AND trade_date >= DATE_TRUNC('month', CURRENT_DATE)
         ), 0) AS month_pnl,
@@ -571,9 +594,9 @@ app.get('/api/stats', requireAuth, async (req, res) => {
 app.get('/api/equity', requireAuth, async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT trade_date, SUM(result_eur) AS daily_pl
+      SELECT trade_date, SUM(result_amount) AS daily_pl
       FROM trades
-      WHERE result_status != 'OPEN' AND result_eur IS NOT NULL AND user_id = $1
+      WHERE result_status != 'OPEN' AND result_amount IS NOT NULL AND user_id = $1
       GROUP BY trade_date
       ORDER BY trade_date
     `, [req.user.userId]);
@@ -598,7 +621,7 @@ app.get('/api/export', requireAuth, async (req, res) => {
     );
     const cols = ['id', 'trade_date', 'trade_time', 'pair', 'direction', 'entry_price',
       'exit_price', 'sl_price', 'lot_size', 'pips', 'rr_multiple', 'tag', 'mood',
-      'result_eur', 'result_status', 'notes'];
+      'result_amount', 'result_status', 'notes'];
     const header = cols.join(',');
     const rows = result.rows.map(r =>
       cols.map(c => {
