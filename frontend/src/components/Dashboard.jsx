@@ -206,7 +206,7 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
             <button key={tr.id} onClick={() => onNavigate('detail', tr.id)}
               style={{
                 display: 'grid', width: '100%',
-                gridTemplateColumns: '64px 100px 1fr 80px 100px',
+                gridTemplateColumns: '80px 100px 1fr 80px 100px',
                 gap: 24, alignItems: 'center', padding: '14px 0',
                 borderBottom: `1px solid ${t.rule}`,
                 background: 'transparent', border: 'none',
@@ -217,7 +217,7 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
               }}
               onMouseEnter={(e) => (e.currentTarget.style.background = t.isGlass ? t.pane : t.paper)}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
-              <span style={{ color: t.ink2, fontSize: 13 }}>{tr.date.slice(5)}</span>
+              <span style={{ color: t.ink2, fontSize: 13 }}>{tr.date.slice(8)}.{tr.date.slice(5,7)}.{tr.date.slice(2,4)}</span>
               <span style={{
                 fontFamily: t.serif, fontSize: 18, fontWeight: 500, color: t.ink,
               }}>{tr.pair}</span>

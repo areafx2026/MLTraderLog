@@ -31,7 +31,6 @@ export default function EquityChart({ t, points, height = 220, withAxes = true }
       <path d={areaFor(points, W, H, 8)} fill={`url(#${gid})`} />
       <path d={pathFor(points, W, H, 8)} fill="none" stroke={t.win}
         strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
-      <circle cx={W - 8} cy={8} r={4} fill={t.win} />
     </svg>
   );
 }
