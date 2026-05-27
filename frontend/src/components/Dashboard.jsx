@@ -18,7 +18,7 @@ function filterEquity(equity, days) {
   return filtered.map((p, i) => ({ ...p, d: i }));
 }
 
-function Stat({ t, label, value, sub }) {
+function Stat({ t, label, value, sub, subColor }) {
   return (
     <div>
       <div style={{
@@ -29,7 +29,7 @@ function Stat({ t, label, value, sub }) {
         fontFamily: t.serif, fontSize: 34, fontWeight: 500,
         letterSpacing: -0.5, lineHeight: 1, color: t.ink,
       }}>{value}</div>
-      {sub && <div style={{ fontSize: 12, color: t.ink3, marginTop: 6 }}>{sub}</div>}
+      {sub && <div style={{ fontSize: 12, color: subColor || t.ink3, marginTop: 6 }}>{sub}</div>}
     </div>
   );
 }
@@ -175,8 +175,9 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
           value={stats.highestStreak > 0 ? stats.highestStreak : '—'}
           sub={stats.highestStreak > 0 ? `best run` : 'no winners yet'} />
         <Stat t={t} label="Drawdown"
-          value={stats.drawdown < 0 ? `${stats.drawdown}%` : '—'}
-          sub={stats.drawdown < 0 ? 'from peak' : 'none'} />
+          value={stats.drawdown < 0 && accountBalance > 0 ? `${stats.drawdown}%` : '—'}
+          sub={accountBalance > 0 ? (stats.drawdown < 0 ? 'from peak' : 'none') : 'set balance in settings'}
+          subColor={accountBalance === 0 ? t.loss : undefined} />
       </section>
 
       {/* recent trades */}
