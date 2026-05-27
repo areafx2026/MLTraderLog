@@ -155,7 +155,8 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
               fontFamily: t.serif, fontStyle: 'italic', fontSize: 14, color: t.ink3,
             }}>Loading…</div>
           ) : (
-            <EquityChart t={t} points={visibleEquity} height={220} />
+            <EquityChart t={t} points={visibleEquity} height={220}
+              accountCurrency={accountCurrency} accountBalance={accountBalance} />
           )}
         </div>
       </section>
