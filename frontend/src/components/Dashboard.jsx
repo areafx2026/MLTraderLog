@@ -146,7 +146,7 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
 
       {/* stats row */}
       <section style={{
-        display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 48,
+        display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 32,
         ...(t.isGlass ? {
           padding: '28px 32px',
           background: t.pane,
@@ -168,9 +168,12 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
         <Stat t={t} label="Avg R:R"
           value={stats.avgRR > 0 ? stats.avgRR : '—'}
           sub={stats.avgRR > 0 ? 'on winning trades' : 'no winners yet'} />
-        <Stat t={t} label="Win streak"
+        <Stat t={t} label="Current Win streak"
           value={stats.streak > 0 ? stats.streak : '—'}
           sub={stats.streak > 0 ? 'and counting' : 'start one'} />
+        <Stat t={t} label="Highest Win streak"
+          value={stats.highestStreak > 0 ? stats.highestStreak : '—'}
+          sub={stats.highestStreak > 0 ? `best run` : 'no winners yet'} />
         <Stat t={t} label="Drawdown"
           value={stats.drawdown < 0 ? `${stats.drawdown}%` : '—'}
           sub={stats.drawdown < 0 ? 'from peak' : 'none'} />

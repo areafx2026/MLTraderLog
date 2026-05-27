@@ -55,6 +55,12 @@ export function computeStats(trades) {
     else break;
   }
 
+  let highestStreak = 0, cur = 0;
+  for (const t of [...closed].reverse()) {
+    if (t.pl > 0) { cur++; if (cur > highestStreak) highestStreak = cur; }
+    else cur = 0;
+  }
+
   let peak = 0, bal = 0, maxDD = 0;
   for (const t of closed) {
     bal += t.pl;
@@ -77,6 +83,7 @@ export function computeStats(trades) {
     winRate,
     avgRR,
     streak,
+    highestStreak,
     drawdown: Math.round(maxDD * 10) / 10,
     totalPL,
     monthPL,
