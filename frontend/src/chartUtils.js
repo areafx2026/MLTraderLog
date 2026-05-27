@@ -49,26 +49,30 @@ export function computeStats(trades, startBalance = 0) {
     ? Math.round(10 * wins.reduce((s, t) => s + (t.rr || 0), 0) / wins.length) / 10
     : 0;
 
+  // trades vom API kommen newest-first — für chronologische Berechnungen umkehren
+  const chronological = [...closed].sort((a, b) => a.date.localeCompare(b.date));
+
+  // Current streak: von neuestem Trade rückwärts zählen (newest-first = closed as-is)
   let streak = 0;
-  for (const t of [...closed].reverse()) {
+  for (const t of closed) {
     if (t.pl > 0) streak++;
     else break;
   }
 
+  // Highest streak: chronologisch vorwärts
   let highestStreak = 0, cur = 0;
-  for (const t of [...closed].reverse()) {
+  for (const t of chronological) {
     if (t.pl > 0) { cur++; if (cur > highestStreak) highestStreak = cur; }
     else cur = 0;
   }
 
-  // Drawdown relativ zum Startkapital berechnen, damit > 100% ausgeschlossen ist.
-  // Falls kein Startkapital gesetzt: Basis ist der erste erreichte Peak (>0).
+  // Drawdown: chronologisch vorwärts, relativ zum Startkapital
   const base = startBalance > 0 ? startBalance : null;
   let peak = base || 0, bal = base || 0, maxDD = 0;
-  for (const t of closed) {
+  for (const t of chronological) {
     bal += t.pl;
     if (bal > peak) peak = bal;
-    const ref = base || peak; // Nenner: Startkapital (bevorzugt) oder aktueller Peak
+    const ref = base || peak;
     const dd = ref > 0 ? Math.max((bal - peak) / ref * 100, -100) : 0;
     if (dd < maxDD) maxDD = dd;
   }
