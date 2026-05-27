@@ -108,14 +108,30 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
           </div>
           {equity.length > 0 && (
             <div style={{ textAlign: 'center' }}>
+              {accountBalance > 0 && (
+                <div style={{
+                  fontFamily: t.serif, fontStyle: 'italic', fontSize: 12,
+                  color: t.ink2, marginBottom: 4, letterSpacing: 0.2,
+                }}>Balance</div>
+              )}
               <div style={{
                 fontFamily: t.serif, fontSize: 36, fontWeight: 500,
                 letterSpacing: -0.5, color: t.ink, lineHeight: 1,
               }}>
-                {totalPL >= 0 ? '+' : '–'}${usd(Math.abs(totalPL))}
+                {accountBalance > 0
+                  ? `$${usd(accountBalance + totalPL)}`
+                  : `${totalPL >= 0 ? '+' : '–'}$${usd(Math.abs(totalPL))}`}
               </div>
-              <div style={{ fontSize: 12, color: monthPL >= 0 ? t.win : t.loss, fontWeight: 500, marginTop: 2 }}>
-                {monthPL >= 0 ? '+' : '–'}${usd(Math.abs(monthPL))} · this month
+              <div style={{ fontSize: 12, fontWeight: 500, marginTop: 2, color: t.ink3 }}>
+                {accountBalance > 0 && (
+                  <span style={{ color: totalPL >= 0 ? t.win : t.loss }}>
+                    {totalPL >= 0 ? '+' : '–'}${usd(Math.abs(totalPL))} · net P&L
+                  </span>
+                )}
+                {accountBalance > 0 && <span style={{ color: t.ink3 }}> · </span>}
+                <span style={{ color: monthPL >= 0 ? t.win : t.loss }}>
+                  {monthPL >= 0 ? '+' : '–'}${usd(Math.abs(monthPL))} · this month
+                </span>
               </div>
             </div>
           )}
