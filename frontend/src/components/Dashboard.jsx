@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { usd, formatDateLong } from '../chartUtils.js';
+import { usd, formatDateLong, formatDateShort } from '../chartUtils.js';
 import EquityChart from './EquityChart.jsx';
 
 const RANGES = [
@@ -238,7 +238,7 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
               }}
               onMouseEnter={(e) => (e.currentTarget.style.background = t.isGlass ? t.pane : t.paper)}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
-              <span style={{ color: t.ink2, fontSize: 13 }}>{tr.date.slice(8)}.{tr.date.slice(5,7)}.{tr.date.slice(2,4)}</span>
+              <span style={{ color: t.ink2, fontSize: 13 }}>{formatDateShort(tr.date)}</span>
               <span style={{
                 fontFamily: t.serif, fontSize: 18, fontWeight: 500, color: t.ink,
               }}>{tr.pair}</span>

@@ -1,4 +1,4 @@
-import { usd, formatMonthYear } from '../chartUtils.js';
+import { usd, formatMonthYear, formatDateShort } from '../chartUtils.js';
 
 function PrimaryButton({ t, children, onClick }) {
   return (
@@ -111,7 +111,7 @@ function ListView({ t, trades, onNavigate }) {
           <span style={{ fontFamily: t.serif, fontStyle: 'italic', color: t.ink3, fontSize: 13 }}>
             #{tr.id}
           </span>
-          <span style={{ color: t.ink2, fontSize: 13 }}>{tr.date.slice(5)}</span>
+          <span style={{ color: t.ink2, fontSize: 13 }}>{formatDateShort(tr.date)}</span>
           <span style={{ fontFamily: t.serif, fontSize: 18, fontWeight: 500, color: t.ink }}>
             {tr.pair}
           </span>
@@ -169,7 +169,7 @@ function CardsView({ t, trades, onNavigate }) {
             fontSize: 12, color: t.ink3,
             paddingTop: 12, borderTop: `1px solid ${t.rule}`,
           }}>
-            <span>{tr.date.slice(5)} · {tr.side}</span>
+            <span>{formatDateShort(tr.date)} · {tr.side}</span>
             <span>
               {tr.pips ? `${tr.pips > 0 ? '+' : ''}${tr.pips} pips` : '—'}
               {tr.rr ? ` · ${tr.rr}R` : ''}

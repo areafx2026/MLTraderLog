@@ -42,7 +42,7 @@ function Seg({ t, value, options, onChange }) {
     }}>
       {options.map((o) => {
         const on = value === o.id;
-        const useGradient = on && o.id === 'hyper' && t.gradientPrimary;
+        const useGradient = on && !!t.gradientPrimary;
         return (
           <button key={o.id} onClick={() => onChange(o.id)}
             style={{
@@ -51,7 +51,7 @@ function Seg({ t, value, options, onChange }) {
               background: useGradient
                 ? t.gradientPrimary
                 : on ? t.ink : 'transparent',
-              color: on ? (t.isGlass ? '#fff' : t.inkInk) : t.ink2,
+              color: on ? (useGradient ? '#fff' : t.inkInk) : t.ink2,
             }}>{o.label}</button>
         );
       })}
