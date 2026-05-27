@@ -39,7 +39,7 @@ export function computeEquity(trades, startBalance = 0) {
     });
 }
 
-export function computeStats(trades) {
+export function computeStats(trades, startBalance = 0) {
   const closed = trades.filter(t => t.status !== 'OPEN');
   const wins = closed.filter(t => t.pl > 0);
   const totalClosed = closed.length;
@@ -61,11 +61,15 @@ export function computeStats(trades) {
     else cur = 0;
   }
 
-  let peak = 0, bal = 0, maxDD = 0;
+  // Drawdown relativ zum Startkapital berechnen, damit > 100% ausgeschlossen ist.
+  // Falls kein Startkapital gesetzt: Basis ist der erste erreichte Peak (>0).
+  const base = startBalance > 0 ? startBalance : null;
+  let peak = base || 0, bal = base || 0, maxDD = 0;
   for (const t of closed) {
     bal += t.pl;
     if (bal > peak) peak = bal;
-    const dd = peak > 0 ? (bal - peak) / peak * 100 : 0;
+    const ref = base || peak; // Nenner: Startkapital (bevorzugt) oder aktueller Peak
+    const dd = ref > 0 ? Math.max((bal - peak) / ref * 100, -100) : 0;
     if (dd < maxDD) maxDD = dd;
   }
 

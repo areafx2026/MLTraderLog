@@ -225,7 +225,7 @@ export default function App() {
     );
   }
 
-  const stats = computeStats(trades);
+  const stats = computeStats(trades, accountBalance);
   const equity = computeEquity(trades, accountBalance);
   const activeTrade = nav.tradeId
     ? trades.find(tr => tr.id === nav.tradeId) || null
