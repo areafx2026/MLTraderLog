@@ -1,7 +1,22 @@
+import { useState } from 'react';
 import { usd, formatDateLong } from '../chartUtils.js';
 import EquityChart from './EquityChart.jsx';
 
-const RANGES = ['30 d', '3 mo', '1 yr', 'All'];
+const RANGES = [
+  { label: '30d',  days: 30  },
+  { label: '3mo',  days: 90  },
+  { label: '1yr',  days: 365 },
+  { label: 'All',  days: null },
+];
+
+function filterEquity(equity, days) {
+  if (!days || equity.length === 0) return equity;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const filtered = equity.filter(p => p.date >= cutoffStr);
+  return filtered.map((p, i) => ({ ...p, d: i }));
+}
 
 function Stat({ t, label, value, sub }) {
   return (
@@ -45,10 +60,12 @@ function getTodayTail(trades) {
   return parts.length > 0 ? parts.join(', ') + '.' : null;
 }
 
-export default function Dashboard({ t, trades, stats, equity, loading, onNavigate, onAddTrade }) {
+export default function Dashboard({ t, trades, stats, equity, loading, onNavigate, onAddTrade, accountCurrency, accountBalance }) {
+  const [activeRange, setActiveRange] = useState(0); // index into RANGES
   const eyebrow = formatDateLong();
   const title = getTodayTitle(trades);
   const tail = getTodayTail(trades);
+  const visibleEquity = filterEquity(equity, RANGES[activeRange].days);
 
   const totalPL = stats.totalPL || 0;
   const monthPL = stats.monthPL || 0;
@@ -102,14 +119,16 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
               </div>
             </div>
           )}
-          <div style={{ display: 'flex', gap: 16, fontSize: 13, color: t.ink2, justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', gap: 16, fontSize: 13, justifyContent: 'flex-end' }}>
             {RANGES.map((r, i) => (
-              <span key={r} style={{
-                color: i === 0 ? t.ink : t.ink3,
-                fontWeight: i === 0 ? 600 : 400,
-                borderBottom: i === 0 ? `1px solid ${t.ink}` : 'none',
-                paddingBottom: 2, cursor: 'pointer',
-              }}>{r}</span>
+              <span key={r.label} onClick={() => setActiveRange(i)}
+                style={{
+                  color: i === activeRange ? t.ink : t.ink3,
+                  fontWeight: i === activeRange ? 600 : 400,
+                  borderBottom: i === activeRange ? `1px solid ${t.ink}` : 'none',
+                  paddingBottom: 2, cursor: 'pointer',
+                  transition: 'color .15s',
+                }}>{r.label}</span>
             ))}
           </div>
         </div>
@@ -120,7 +139,7 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
               fontFamily: t.serif, fontStyle: 'italic', fontSize: 14, color: t.ink3,
             }}>Loading…</div>
           ) : (
-            <EquityChart t={t} points={equity} height={220} />
+            <EquityChart t={t} points={visibleEquity} height={220} />
           )}
         </div>
       </section>
