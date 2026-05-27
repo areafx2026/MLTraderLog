@@ -61,7 +61,7 @@ function SelectField({ t, form, set, k, label, options }) {
   );
 }
 
-export default function TradeForm({ t, trade, onSave, onCancel }) {
+export default function TradeForm({ t, trade, onSave, onCancel, accountCurrency = 'EUR' }) {
   const isEdit = !!trade;
 
   const [form, setForm] = useState({
@@ -76,7 +76,7 @@ export default function TradeForm({ t, trade, onSave, onCancel }) {
     tag: '',
     mood: 'calm',
     note: '',
-    result_eur: '',
+    result_amount: '',
   });
 
   useEffect(() => {
@@ -93,7 +93,7 @@ export default function TradeForm({ t, trade, onSave, onCancel }) {
         tag: trade.tag || '',
         mood: trade.mood || 'calm',
         note: trade.note || '',
-        result_eur: trade.pl !== undefined ? String(trade.pl) : '',
+        result_amount: trade.pl !== undefined ? String(trade.pl) : '',
       });
     }
   }, [trade]);
@@ -115,7 +115,7 @@ export default function TradeForm({ t, trade, onSave, onCancel }) {
       tag: form.tag || null,
       mood: form.mood || null,
       notes: form.note || null,
-      result_eur: form.result_eur !== '' ? form.result_eur : null,
+      result_amount: form.result_amount !== '' ? form.result_amount : null,
     });
   }, [form, trade, onSave]);
 
@@ -167,7 +167,7 @@ export default function TradeForm({ t, trade, onSave, onCancel }) {
         <Field t={t} form={form} set={set} k="size"       label="Size"       placeholder="1.50"   sub="in lots" />
         <Field t={t} form={form} set={set} k="tag"        label="Setup"      placeholder="London breakout" />
         <SelectField t={t} form={form} set={set} k="mood" label="Mood"       options={MOODS} />
-        <Field t={t} form={form} set={set} k="result_eur" label="Result ($)" placeholder="optional — computed from entry/exit if blank" />
+        <Field t={t} form={form} set={set} k="result_amount" label={`Result (${accountCurrency || ''})`} placeholder="optional — computed from entry/exit if blank" />
       </div>
 
       <div style={{

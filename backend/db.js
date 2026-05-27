@@ -93,6 +93,16 @@ const initDb = async () => {
         created_at TIMESTAMPTZ DEFAULT NOW()
       )`,
       `CREATE INDEX IF NOT EXISTS password_history_user_id ON password_history (user_id, created_at DESC)`,
+      // Rename result_eur → result_amount (idempotent via column existence check)
+      `DO $$ BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name='trades' AND column_name='result_eur') THEN
+          ALTER TABLE trades RENAME COLUMN result_eur TO result_amount;
+        END IF;
+      END $$`,
+      // Account settings: starting balance + preferred currency
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS account_currency VARCHAR(3) NOT NULL DEFAULT 'EUR'`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS account_balance NUMERIC(12,2) NOT NULL DEFAULT 0`,
     ];
     for (const sql of migrations) {
       await client.query(sql);
@@ -105,7 +115,7 @@ const initDb = async () => {
 };
 
 function mapTrade(row) {
-  const pl = Math.round(parseFloat(row.result_eur) || 0);
+  const pl = Math.round(parseFloat(row.result_amount) || 0);
   return {
     id: String(row.id).padStart(4, '0'),
     date: row.trade_date instanceof Date

@@ -56,6 +56,8 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem(USER_KEY)) || null; }
     catch { return null; }
   });
+  const [accountCurrency, setAccountCurrency] = useState('EUR');
+  const [accountBalance, setAccountBalance] = useState(0);
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -119,7 +121,7 @@ export default function App() {
     'Authorization': `Bearer ${token}`,
   }), [token]);
 
-  // On startup: DB wins — load design+mode from server and apply
+  // On startup: DB wins — load design+mode+account from server and apply
   useEffect(() => {
     if (!token) return;
     fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
@@ -127,11 +129,13 @@ export default function App() {
       .then(data => {
         if (data?.design) setDesign(data.design);
         if (data?.colorMode) setMode(data.colorMode);
+        if (data?.accountCurrency) setAccountCurrency(data.accountCurrency);
+        if (data?.accountBalance !== undefined) setAccountBalance(data.accountBalance);
       })
       .catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // On login/register: apply design+mode from server response
+  // On login/register: apply design+mode+account from server response
   const handleAuth = (newToken, newUser) => {
     localStorage.setItem(TOKEN_KEY, newToken);
     localStorage.setItem(USER_KEY, JSON.stringify(newUser));
@@ -139,6 +143,8 @@ export default function App() {
     setUser(newUser);
     if (newUser.design) setDesign(newUser.design);
     if (newUser.colorMode) setMode(newUser.colorMode);
+    if (newUser.accountCurrency) setAccountCurrency(newUser.accountCurrency);
+    if (newUser.accountBalance !== undefined) setAccountBalance(newUser.accountBalance);
   };
 
   const handleSignOut = () => {
@@ -154,6 +160,8 @@ export default function App() {
     setNav({ screen: 'today', tradeId: null });
     setDesign('hyper');
     setMode('dark');
+    setAccountCurrency('EUR');
+    setAccountBalance(0);
   };
 
   const handle401 = () => handleSignOut();
@@ -218,7 +226,7 @@ export default function App() {
   }
 
   const stats = computeStats(trades);
-  const equity = computeEquity(trades);
+  const equity = computeEquity(trades, accountBalance);
   const activeTrade = nav.tradeId
     ? trades.find(tr => tr.id === nav.tradeId) || null
     : null;
@@ -228,6 +236,7 @@ export default function App() {
     case 'today':
       screen = (
         <Dashboard t={t} trades={trades} stats={stats} equity={equity} loading={loading}
+          accountCurrency={accountCurrency} accountBalance={accountBalance}
           onNavigate={navigate} onAddTrade={() => navigate('add')} />
       );
       break;
@@ -248,6 +257,7 @@ export default function App() {
     case 'add':
       screen = (
         <TradeForm t={t} trade={activeTrade}
+          accountCurrency={accountCurrency}
           onSave={handleSave}
           onCancel={() => navigate('trades')} />
       );
@@ -280,12 +290,18 @@ export default function App() {
           view={tradeView} onChangeView={changeView}
           user={user} onSignOut={handleSignOut} onNavigate={navigate}
           token={token} lang={lang} onChangeLang={changeLang}
+          accountCurrency={accountCurrency} accountBalance={accountBalance}
+          onSaveAccount={(currency, balance) => {
+            setAccountCurrency(currency);
+            setAccountBalance(balance);
+          }}
         />
       );
       break;
     default:
       screen = (
         <Dashboard t={t} trades={trades} stats={stats} equity={equity} loading={loading}
+          accountCurrency={accountCurrency} accountBalance={accountBalance}
           onNavigate={navigate} onAddTrade={() => navigate('add')} />
       );
   }

@@ -21,7 +21,7 @@ export function usd(n) {
   return Number(n).toLocaleString('en-US');
 }
 
-export function computeEquity(trades) {
+export function computeEquity(trades, startBalance = 0) {
   const closed = trades.filter(t => t.status !== 'OPEN' && t.pl !== 0);
   const sorted = [...closed].sort((a, b) => a.date.localeCompare(b.date));
 
@@ -30,7 +30,7 @@ export function computeEquity(trades) {
     dailyPL[t.date] = (dailyPL[t.date] || 0) + t.pl;
   });
 
-  let cumulative = 0;
+  let cumulative = startBalance;
   return Object.entries(dailyPL)
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([date, pl], i) => {
