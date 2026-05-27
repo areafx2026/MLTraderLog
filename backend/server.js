@@ -9,6 +9,11 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const { pool, initDb, mapTrade } = require('./db');
 
+// ── Test mode ────────────────────────────────────────────────────────────────
+// TEST_MODE=true  →  skip email, auto-verify on register, expose cleanup endpoint
+const TEST_MODE = process.env.TEST_MODE === 'true';
+if (TEST_MODE) console.warn('[TEST_MODE] Email verification disabled — DO NOT use in production');
+
 // ── Mailer ────────────────────────────────────────────────────────────────────
 
 const mailer = process.env.SMTP_HOST
@@ -25,6 +30,7 @@ function generateCode() {
 }
 
 async function sendVerificationEmail(email, code) {
+  if (TEST_MODE) return; // silent skip in test mode
   if (!mailer) {
     console.log(`[DEV] Verification code for ${email}: ${code}`);
     return;
@@ -133,12 +139,22 @@ app.post('/api/auth/register', async (req, res) => {
   const safeMode   = ['light', 'dark', 'system'].includes(mode) ? mode : 'dark';
   try {
     const hash = await bcrypt.hash(password, 12);
+    // In TEST_MODE: register as already verified, return JWT immediately
+    const verified = TEST_MODE ? true : false;
     const result = await pool.query(
       `INSERT INTO users (email, password_hash, username, design, color_mode, email_verified)
-       VALUES ($1, $2, $3, $4, $5, FALSE) RETURNING id, email, username`,
-      [email.toLowerCase().trim(), hash, normalizedUsername, safeDesign, safeMode]
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, email, username`,
+      [email.toLowerCase().trim(), hash, normalizedUsername, safeDesign, safeMode, verified]
     );
     const user = result.rows[0];
+
+    if (TEST_MODE) {
+      const token = jwt.sign(
+        { userId: user.id, email: user.email, username: user.username },
+        JWT_SECRET, { expiresIn: '30d' }
+      );
+      return res.status(201).json({ token, user: { id: user.id, email: user.email, username: user.username, design: safeDesign, colorMode: safeMode, accountCurrency: 'EUR', accountBalance: 0 } });
+    }
 
     // Generate and store verification code (15 min expiry)
     const code = generateCode();
@@ -636,6 +652,27 @@ app.get('/api/export', requireAuth, async (req, res) => {
     res.status(500).json({ error: 'DB error' });
   }
 });
+
+// ── Test-only cleanup endpoint ────────────────────────────────────────────────
+// DELETE /api/test/cleanup?domain=loadtest.fake
+// Only available when TEST_MODE=true — deletes all users with matching email domain
+if (TEST_MODE) {
+  app.delete('/api/test/cleanup', async (req, res) => {
+    const domain = (req.query.domain || '').replace(/[^a-z0-9.-]/gi, '');
+    if (!domain) return res.status(400).json({ error: 'domain query param required' });
+    try {
+      const result = await pool.query(
+        `DELETE FROM users WHERE email LIKE $1 RETURNING id`,
+        [`%@${domain}`]
+      );
+      console.log(`[TEST_MODE] Cleanup: deleted ${result.rowCount} users with @${domain}`);
+      res.json({ deleted: result.rowCount });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'DB error' });
+    }
+  });
+}
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 
