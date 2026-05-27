@@ -149,6 +149,16 @@ const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frid
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'];
 
+const SHORT_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// YYYY-MM-DD → "27 May '26"
+export function formatDateShort(dateStr) {
+  const d = parseInt(dateStr.slice(8), 10);
+  const m = parseInt(dateStr.slice(5, 7), 10) - 1;
+  const y = dateStr.slice(2, 4);
+  return `${d} ${SHORT_MONTHS[m]} '${y}`;
+}
+
 export function formatDateLong(date = new Date()) {
   const d = date instanceof Date ? date : new Date();
   return `${DAY_NAMES[d.getDay()]}, the ${ORDINALS[d.getDate()]} of ${MONTH_NAMES[d.getMonth()]}`;

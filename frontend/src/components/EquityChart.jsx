@@ -97,16 +97,25 @@ export default function EquityChart({ t, points, height = 220, withAxes = true, 
           strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
 
         {hover && (
-          <>
-            <line
-              x1={hover.svgX} x2={hover.svgX} y1={0} y2={H}
-              stroke={t.rule2 || t.rule} strokeWidth={1} />
-            <circle
-              cx={hover.svgX} cy={hover.svgY} r={4.5}
-              fill={t.win} stroke={t.isGlass ? 'rgba(0,0,0,.3)' : t.paper || '#111'} strokeWidth={1.5} />
-          </>
+          <line
+            x1={hover.svgX} x2={hover.svgX} y1={0} y2={H}
+            stroke={t.rule2 || t.rule} strokeWidth={1} />
         )}
       </svg>
+
+      {/* Dot as a real DOM element — SVG circle would appear oval with preserveAspectRatio="none" */}
+      {hover && (
+        <div style={{
+          position: 'absolute',
+          left: `${hover.pct * 100}%`,
+          top: `${(hover.svgY / H) * 100}%`,
+          transform: 'translate(-50%, -50%)',
+          width: 9, height: 9, borderRadius: '50%',
+          background: t.win,
+          border: `2px solid ${t.isGlass ? 'rgba(0,0,0,.35)' : t.paper || '#111'}`,
+          pointerEvents: 'none', zIndex: 5,
+        }} />
+      )}
 
       {hover && (
         <div style={{
