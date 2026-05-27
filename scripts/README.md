@@ -1,28 +1,28 @@
 # FxLedger — Scripts
 
-## Vorbereitung
+## Backup (auf dem Server ausführen)
 
-In `backup.sh` und `restore.sh` die Konfiguration anpassen:
-
-```bash
-SSH_TARGET="root@<HETZNER_IP>"   # deine Server-IP
-SSH_KEY="-i ~/.ssh/id_rsa"        # falls nicht im ssh-agent
-COMPOSE_PROJECT="mltraderlog"     # docker compose Projektname (normalerweise OK)
-```
-
-## Backup
+Auf dem Hetzner-Server einloggen und ausführen:
 
 ```bash
-bash scripts/backup.sh
+ssh user550398@<HETZNER_IP>
+cd /var/www/fxledger
+bash scripts/backup-server.sh
 ```
 
 Erzeugt in `./backups/`:
 - `db_YYYYMMDD_HHMMSS.sql` — vollständiger PostgreSQL-Dump
 - `uploads_YYYYMMDD_HHMMSS.tar.gz` — alle User-Screenshots
 
-## Restore
+Das Script gibt am Ende die fertigen `scp`-Befehle aus, um die Dateien
+auf deinen lokalen Rechner zu laden.
+
+## Restore (auf dem Server ausführen)
 
 ```bash
+ssh user550398@<HETZNER_IP>
+cd /var/www/fxledger
+
 # Nur DB
 bash scripts/restore.sh --db backups/db_20250527_120000.sql
 
