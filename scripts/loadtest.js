@@ -65,7 +65,6 @@ const TAGS   = ['London breakout','NY open','Support bounce','Trend continuation
 
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function rnd(min, max) { return (Math.random() * (max - min) + min).toFixed(5); }
-function uid() { return `${Date.now()}_${Math.floor(Math.random() * 1e9)}_${__VU}`; }
 
 function fakeTrade() {
   const entry = parseFloat(rnd(1.05, 1.15));
@@ -90,9 +89,10 @@ const headers = { 'Content-Type': 'application/json' };
 
 // ── Main scenario ─────────────────────────────────────────────────────────────
 export default function () {
-  const id = uid();
-  const email = `user_${id}@${TEST_DOMAIN}`;
-  const username = `testuser_${id}`.slice(0, 20);
+  // Use __VU (1-100) + __ITER (per-VU counter) for guaranteed uniqueness
+  // e.g. "u42_137" — always < 20 chars, never collides
+  const username = `u${__VU}_${__ITER}`;
+  const email = `${username}@${TEST_DOMAIN}`;
   const password = 'Loadtest123!';
 
   // 1) Register
