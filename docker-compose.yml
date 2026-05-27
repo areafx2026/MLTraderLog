@@ -30,6 +30,7 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-}
+      TEST_MODE: ${TEST_MODE:-false}
     volumes:
       - mltraderlog_uploads:/app/uploads
     depends_on:
