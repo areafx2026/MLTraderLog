@@ -31,6 +31,7 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-}
       TEST_MODE: ${TEST_MODE:-false}
+      UV_THREADPOOL_SIZE: 16
     volumes:
       - mltraderlog_uploads:/app/uploads
     depends_on:

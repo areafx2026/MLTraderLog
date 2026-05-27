@@ -138,7 +138,7 @@ app.post('/api/auth/register', async (req, res) => {
   const safeDesign = ['linen', 'hyper'].includes(design) ? design : 'hyper';
   const safeMode   = ['light', 'dark', 'system'].includes(mode) ? mode : 'dark';
   try {
-    const hash = await bcrypt.hash(password, 12);
+    const hash = await bcrypt.hash(password, 10);
     // In TEST_MODE: register as already verified, return JWT immediately
     const verified = TEST_MODE ? true : false;
     const result = await pool.query(
@@ -390,7 +390,7 @@ app.put('/api/auth/password', requireAuth, async (req, res) => {
 
     // Save old hash to history, then update password
     const oldHash = result.rows[0].password_hash;
-    const newHash = await bcrypt.hash(newPassword, 12);
+    const newHash = await bcrypt.hash(newPassword, 10);
     await pool.query('INSERT INTO password_history (user_id, password_hash) VALUES ($1, $2)', [req.user.userId, oldHash]);
     await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [newHash, req.user.userId]);
 
