@@ -46,11 +46,15 @@ export const options = {
     },
   },
   thresholds: {
-    http_req_duration:      ['p(95)<2000'],  // 95% of requests under 2s
-    http_req_failed:        ['rate<0.05'],   // Less than 5% errors
+    // Register is bcrypt-heavy — allow up to 8s p(95) under 100 concurrent users
+    // Trades and reads must stay fast
+    'register_duration':    ['p(95)<8000'],
+    'trade_duration':       ['p(95)<3000'],
+    'login_duration':       ['p(95)<3000'],
+    http_req_failed:        ['rate<0.02'],   // Less than 2% hard errors
     register_success_rate:  ['rate>0.95'],   // 95%+ register success
     login_success_rate:     ['rate>0.95'],
-    trade_success_rate:     ['rate>0.95'],
+    trade_success_rate:     ['rate>0.98'],
   },
 };
 

@@ -6,6 +6,9 @@ const pool = new Pool({
   database: process.env.DB_NAME || 'mltraderlog',
   user: process.env.DB_USER || 'mltrader',
   password: process.env.DB_PASSWORD,
+  max: 50,              // up from default 10 — handles concurrent load
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
 });
 
 const initDb = async () => {
