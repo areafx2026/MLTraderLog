@@ -190,7 +190,7 @@ export default function Dashboard({ t, trades, stats, equity, loading, onNavigat
         <Stat t={t} label="Highest Win streak"
           value={stats.highestStreak > 0 ? stats.highestStreak : '—'}
           sub={stats.highestStreak > 0 ? `best run` : 'no winners yet'} />
-        <Stat t={t} label="Drawdown"
+        <Stat t={t} label="Worst drawdown"
           value={stats.drawdown < 0 && accountBalance > 0 ? `${stats.drawdown}%` : '—'}
           sub={accountBalance > 0 ? (stats.drawdown < 0 ? 'from peak' : 'none') : 'set balance in settings'}
           subColor={accountBalance === 0 ? t.loss : undefined} />
