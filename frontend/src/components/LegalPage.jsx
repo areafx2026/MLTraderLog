@@ -10,8 +10,7 @@ const PRIVACY = {
     {
       h2: '1. Controller',
       body: [
-        { p: 'Sascha Cwetanski · Bornholmring 20 · 23560 Luebeck, Germany' },
-        { p: 'Email: contactme@fxledger.com · Website: www.fxledger.com' },
+        { controller: true },
       ],
     },
     {
@@ -195,8 +194,31 @@ const TERMS = {
 
 // ── Renderer ─────────────────────────────────────────────────────────────────
 
+function ControllerBlock({ t }) {
+  const f = t.sans; // both Linen and Hyper use sans for body text
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="100%" height="72"
+      style={{ display: 'block', userSelect: 'none', WebkitUserSelect: 'none', overflow: 'visible' }}
+      aria-hidden="true"
+    >
+      <text x="0" y="16" fill={t.ink} fontFamily={f} fontSize="14" fontWeight="500">
+        Sascha Cwetanski
+      </text>
+      <text x="0" y="40" fill={t.ink2} fontFamily={f} fontSize="14">
+        Bornholmring 20 · 23560 Lübeck, Germany
+      </text>
+      <text x="0" y="64" fill={t.ink2} fontFamily={f} fontSize="14">
+        contactme@fxledger.com · www.fxledger.com
+      </text>
+    </svg>
+  );
+}
+
 function Body({ t, items }) {
   return items.map((item, i) => {
+    if (item.controller) return <ControllerBlock key={i} t={t} />;
     if (item.h3) return (
       <div key={i} style={{
         fontFamily: t.serif, fontWeight: 500, fontSize: 16,
