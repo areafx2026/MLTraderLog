@@ -109,7 +109,7 @@ function OtpInput({ t, value, onChange }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function AuthScreen({ t, onAuth, lang = 'en', resolvedMode = 'dark', design = 'linen', mode = 'dark' }) {
+export default function AuthScreen({ t, onAuth, lang = 'en', resolvedMode = 'dark', design = 'linen', mode = 'dark', onNavigateLegal }) {
   const tr = createT(lang);
   const [view, setView] = useState('login'); // 'login' | 'register' | 'verify'
 
