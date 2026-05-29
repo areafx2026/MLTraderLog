@@ -245,7 +245,7 @@ export default function App() {
           t={t} onAuth={handleAuth} lang={lang}
           resolvedMode={resolvedMode} design={design} mode={mode}
           onSetDesign={setDesignPref} onSetMode={setModePref}
-          onNavigateLegal={setLegalNav}
+          onNavigateLegal={setLegalNav}  // accepts 'privacy' | 'terms' | 'datenschutz'
         />
         {!cookieConsent && (
           <CookieBanner t={t} onAccept={(level) => {
@@ -332,6 +332,7 @@ export default function App() {
       break;
     case 'privacy':
     case 'terms':
+    case 'datenschutz':
       screen = <LegalPage t={t} type={nav.screen} onBack={() => navigate('today')} />;
       break;
     default:

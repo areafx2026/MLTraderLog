@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// LegalPage — Privacy Policy + Terms and Conditions
-// type: 'privacy' | 'terms'
+// LegalPage — Privacy Policy | Terms and Conditions | Data Protection
+// type: 'privacy' | 'terms' | 'datenschutz'
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PRIVACY = {
@@ -84,6 +84,144 @@ const PRIVACY = {
       h2: '8. Changes to This Privacy Policy',
       body: [
         { p: 'We reserve the right to update this policy when the service or applicable law changes. The current version is always available at www.fxledger.com/privacy.' },
+      ],
+    },
+  ],
+};
+
+const DATENSCHUTZ = {
+  title: 'Data Protection Declaration',
+  updated: 'June 2026',
+  sections: [
+    {
+      h2: '1. Controller (Art. 4 No. 7 GDPR)',
+      body: [
+        { p: 'Sascha Cwetanski · Bornholmring 20 · 23560 Lübeck, Germany' },
+        { p: 'Email: contactme@fxledger.com · Website: www.fxledger.com' },
+        { small: 'No Data Protection Officer is required under Art. 37 GDPR for this operation.' },
+      ],
+    },
+    {
+      h2: '2. Processing Activities and Legal Bases (Art. 6 GDPR)',
+      body: [
+        { h3: '2.1 Registration and Account Management' },
+        { p: 'When you create an account, we process your email address, username, and hashed password.' },
+        { table: {
+          headers: ['Purpose', 'Legal Basis', 'Retention'],
+          rows: [
+            ['Account creation and authentication', 'Art. 6(1)(b) — performance of a contract', 'Duration of account + 30 days after deletion'],
+            ['Email verification', 'Art. 6(1)(b) — performance of a contract', 'Until verified, max 24 hours'],
+            ['Password history (last 3)', 'Art. 6(1)(b) — security obligation', 'Duration of account'],
+          ],
+        }},
+        { h3: '2.2 Trading Journal Data' },
+        { p: 'Trade records, notes, tags, screenshots, and analytics you enter are processed exclusively to provide the service.' },
+        { table: {
+          headers: ['Purpose', 'Legal Basis', 'Retention'],
+          rows: [
+            ['Storing and displaying your trading data', 'Art. 6(1)(b) — performance of a contract', 'Duration of account'],
+            ['Generating statistics and insights', 'Art. 6(1)(b) — performance of a contract', 'Duration of account'],
+          ],
+        }},
+        { h3: '2.3 Server Log Data' },
+        { p: 'Technical access data (IP address, browser type, timestamp, request path) is automatically collected by our web server.' },
+        { table: {
+          headers: ['Purpose', 'Legal Basis', 'Retention'],
+          rows: [
+            ['Secure and stable operation of the service', 'Art. 6(1)(f) — legitimate interest', 'Max. 30 days, then automatically deleted'],
+          ],
+        }},
+        { h3: '2.4 Cookies and Local Storage' },
+        { p: 'We use a technically necessary session cookie (HttpOnly, Secure) to maintain your authenticated session. No tracking cookies are set without your explicit consent.' },
+        { table: {
+          headers: ['Name', 'Type', 'Purpose', 'Duration'],
+          rows: [
+            ['fxl_session', 'Necessary', 'Authentication session', '30 days'],
+            ['cookie_consent', 'Necessary', 'Stores your cookie preference (localStorage)', 'Indefinite'],
+            ['Analytics cookies', 'Optional', 'Usage analytics (only with consent)', 'Depends on provider'],
+          ],
+        }},
+        { small: 'Legal basis for necessary cookies: Art. 6(1)(f) GDPR (legitimate interest). Legal basis for optional cookies: Art. 6(1)(a) GDPR (consent).' },
+        { h3: '2.5 Payment Processing' },
+        { p: 'For paid subscriptions, payment data is processed exclusively by Stripe Payments Europe, Ltd. We do not store or have access to payment card data.' },
+        { table: {
+          headers: ['Purpose', 'Legal Basis', 'Retention'],
+          rows: [
+            ['Processing subscription payments', 'Art. 6(1)(b) — performance of a contract', 'Per Stripe retention policy and tax law (up to 10 years)'],
+          ],
+        }},
+      ],
+    },
+    {
+      h2: '3. Recipients and Third-Party Processors (Art. 28 GDPR)',
+      body: [
+        { p: 'We have concluded Data Processing Agreements (DPA) with the following processors:' },
+        { list: [
+          'Hetzner Online GmbH — Server hosting (Germany/EU). Data stored exclusively in EU data centres.',
+          'Anthropic PBC — AI features (USA). Transfer under Standard Contractual Clauses, Art. 46(2)(c) GDPR.',
+          'Stripe Payments Europe Ltd. — Payment processing (Ireland). Transfer under SCCs where applicable.',
+          'Google Ireland Ltd. — Analytics (only with consent). Transfer under SCCs where applicable.',
+        ]},
+        { small: 'No personal data is sold or shared with third parties for their own marketing purposes.' },
+      ],
+    },
+    {
+      h2: '4. International Data Transfers (Art. 44–49 GDPR)',
+      body: [
+        { p: 'Where personal data is transferred to countries outside the EEA (e.g. to Anthropic in the USA), such transfers are carried out on the basis of Standard Contractual Clauses (SCCs) pursuant to Art. 46(2)(c) GDPR, ensuring an adequate level of data protection.' },
+      ],
+    },
+    {
+      h2: '5. Your Rights as a Data Subject (Art. 15–22 GDPR)',
+      body: [
+        { p: 'You have the following rights regarding your personal data:' },
+        { table: {
+          headers: ['Right', 'Article', 'Description'],
+          rows: [
+            ['Access', 'Art. 15', 'Obtain confirmation and a copy of your personal data'],
+            ['Rectification', 'Art. 16', 'Have inaccurate data corrected without undue delay'],
+            ['Erasure', 'Art. 17', 'Request deletion of your data ("right to be forgotten")'],
+            ['Restriction', 'Art. 18', 'Restrict processing under certain conditions'],
+            ['Portability', 'Art. 20', 'Receive your data in a structured, machine-readable format'],
+            ['Objection', 'Art. 21', 'Object to processing based on legitimate interests'],
+            ['Withdraw consent', 'Art. 7(3)', 'Withdraw consent at any time without affecting prior processing'],
+          ],
+        }},
+        { p: 'To exercise any of these rights, contact: contactme@fxledger.com' },
+        { p: 'We will respond within one month (Art. 12(3) GDPR). No fee is charged for first requests.' },
+      ],
+    },
+    {
+      h2: '6. Right to Lodge a Complaint (Art. 77 GDPR)',
+      body: [
+        { p: 'You have the right to lodge a complaint with a supervisory authority. The competent authority for FxLedger is:' },
+        { p: 'Unabhängiges Landeszentrum für Datenschutz Schleswig-Holstein (ULD)' },
+        { link: 'datenschutzzentrum.de', href: 'https://www.datenschutzzentrum.de' },
+        { small: 'You may also contact the supervisory authority of your country of residence or place of work.' },
+      ],
+    },
+    {
+      h2: '7. Automated Decision-Making (Art. 22 GDPR)',
+      body: [
+        { p: 'We do not use automated decision-making or profiling that produces legal or similarly significant effects on you.' },
+      ],
+    },
+    {
+      h2: '8. Data Security (Art. 32 GDPR)',
+      body: [
+        { p: 'We implement appropriate technical and organisational measures to protect your data, including:' },
+        { list: [
+          'HTTPS/TLS encryption for all data in transit',
+          'Bcrypt hashing for passwords (cost factor 10)',
+          'HttpOnly, Secure, SameSite=Strict session cookies',
+          'Server infrastructure operated in ISO 27001-certified EU data centres',
+        ]},
+      ],
+    },
+    {
+      h2: '9. Changes to This Declaration',
+      body: [
+        { p: 'We may update this Data Protection Declaration when the service or applicable law changes. Material changes will be communicated by email at least 30 days in advance. The current version is always available within the application.' },
       ],
     },
   ],
@@ -269,7 +407,7 @@ function Body({ t, items }) {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LegalPage({ t, type, onBack }) {
-  const doc = type === 'privacy' ? PRIVACY : TERMS;
+  const doc = type === 'privacy' ? PRIVACY : type === 'datenschutz' ? DATENSCHUTZ : TERMS;
 
   return (
     <div style={{ flex: 1, padding: '56px 72px 60px', overflow: 'auto', minWidth: 0 }}>
