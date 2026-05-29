@@ -255,6 +255,7 @@ function addMessage(role, label, text = '', typing = false) {
   const textEl = document.createElement('div');
   textEl.className = typing ? 'typing-indicator' : '';
   textEl.textContent = text;
+  if (typing) textEl.id = `text-${role}`;
 
   bubbleEl.appendChild(nameEl);
   bubbleEl.appendChild(textEl);
@@ -292,10 +293,10 @@ async function startStream() {
 
   currentEventSource.addEventListener('chunk', e => {
     const { role, text } = JSON.parse(e.data);
-    const typingEl = document.querySelector(`#typing-${role} .typing-indicator`);
-    if (typingEl) {
-      typingEl.classList.remove('typing-indicator');
-      typingEl.textContent += text;
+    const textEl = document.querySelector(`#text-${role}`);
+    if (textEl) {
+      textEl.classList.remove('typing-indicator');
+      textEl.textContent += text;
     }
     feed.scrollTop = feed.scrollHeight;
   });
