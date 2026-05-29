@@ -93,11 +93,16 @@ async def stream(request: Request):
             yield {"event": "speaker", "data": json.dumps({"role": role, "label": label})}
 
             full_text = ""
-            async for chunk in stream_agent_response(role, state["history"], last_ceo):
-                if await request.is_disconnected():
-                    break
-                full_text += chunk
-                yield {"event": "chunk", "data": json.dumps({"role": role, "text": chunk})}
+            try:
+                async for chunk in stream_agent_response(role, state["history"], last_ceo):
+                    if await request.is_disconnected():
+                        break
+                    full_text += chunk
+                    yield {"event": "chunk", "data": json.dumps({"role": role, "text": chunk})}
+            except Exception as e:
+                error_msg = f"[Fehler: {e}]"
+                yield {"event": "chunk", "data": json.dumps({"role": role, "text": error_msg})}
+                full_text = error_msg
 
             state["history"].append({"speaker": label, "text": full_text})
             state["pending_role_idx"] = i + 1

@@ -157,7 +157,11 @@ def build_history_text(history: list[dict]) -> str:
 
 
 async def stream_agent_response(role: str, history: list[dict], user_input: str):
-    """Generator: liefert Text-Chunks des Agenten als SSE-Daten."""
+    """Generator: liefert Text-Chunks des Agenten als SSE-Daten.
+    Bei Anthropic API 500-Fehlern wird einmalig nicht-streaming wiederholt.
+    """
+    import asyncio as _asyncio
+
     client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
     company_ctx = build_context()
@@ -166,14 +170,28 @@ async def stream_agent_response(role: str, history: list[dict], user_input: str)
 
     content = build_message_content(company_ctx, role_ctx, history_text, user_input, role)
 
-    with client.messages.stream(
+    kwargs = dict(
         model="claude-sonnet-4-6",
         max_tokens=400,
         system=SYSTEM_PROMPTS[role],
         messages=[{"role": "user", "content": content}],
-    ) as stream:
-        for text in stream.text_stream:
-            yield text
+    )
+
+    # Erster Versuch: streaming
+    try:
+        with client.messages.stream(**kwargs) as stream:
+            for text in stream.text_stream:
+                yield text
+        return
+    except anthropic.APIStatusError as e:
+        if e.status_code != 500:
+            raise
+        # Anthropic Internal Server Error → kurz warten, dann nicht-streaming retry
+        await _asyncio.sleep(3)
+
+    # Zweiter Versuch: non-streaming (liefert Text am Stück)
+    response = client.messages.create(**kwargs)
+    yield response.content[0].text
 
 
 async def write_round_summary(history: list[dict], round_num: int):
