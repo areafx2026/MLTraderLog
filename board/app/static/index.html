@@ -236,6 +236,14 @@ let currentEventSource = null;
 
 const ROLE_CLASS = { ceo: 'ceo', cfo: 'cfo', cio: 'cio', cmo: 'cmo' };
 
+function renderMd(text) {
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>');
+}
+
 function addMessage(role, label, text = '', typing = false) {
   const msgEl = document.createElement('div');
   msgEl.className = 'msg';
@@ -293,18 +301,21 @@ async function startStream() {
 
   currentEventSource.addEventListener('chunk', e => {
     const { role, text } = JSON.parse(e.data);
-    const textEl = document.querySelector(`#text-${role}`);
+    const textEl = document.getElementById(`text-${role}`);
     if (textEl) {
       textEl.classList.remove('typing-indicator');
-      textEl.textContent += text;
+      textEl._raw = (textEl._raw || '') + text;
+      textEl.innerHTML = renderMd(textEl._raw);
     }
     feed.scrollTop = feed.scrollHeight;
   });
 
   currentEventSource.addEventListener('agent_done', e => {
     const { role } = JSON.parse(e.data);
-    const typingEl = document.querySelector(`#typing-${role}`);
-    if (typingEl) typingEl.id = null;
+    const msgEl = document.getElementById(`typing-${role}`);
+    if (msgEl) msgEl.removeAttribute('id');
+    const textEl = document.getElementById(`text-${role}`);
+    if (textEl) textEl.removeAttribute('id');
   });
 
   currentEventSource.addEventListener('round_done', () => {
