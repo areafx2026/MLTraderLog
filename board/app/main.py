@@ -5,14 +5,14 @@ from pathlib import Path
 from typing import AsyncGenerator
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, UploadFile, File, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sse_starlette.sse import EventSourceResponse
 
 load_dotenv()
 
-from agents import ROLES, ROLE_LABELS, stream_agent_response, write_round_summary
+from agents import ROLES, ROLE_LABELS, stream_agent_response, write_round_summary, UPLOAD_DIR, list_uploads
 
 app = FastAPI()
 
@@ -108,6 +108,38 @@ async def stream(request: Request):
         yield {"event": "round_done", "data": "{}"}
 
     return EventSourceResponse(generator())
+
+
+ALLOWED_EXTENSIONS = {".txt", ".md", ".pdf"}
+MAX_SIZE_MB = 10
+
+
+@app.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
+    suffix = Path(file.filename).suffix.lower()
+    if suffix not in ALLOWED_EXTENSIONS:
+        raise HTTPException(400, f"Nicht unterstütztes Format. Erlaubt: {', '.join(ALLOWED_EXTENSIONS)}")
+    content = await file.read()
+    if len(content) > MAX_SIZE_MB * 1024 * 1024:
+        raise HTTPException(400, f"Datei zu groß (max {MAX_SIZE_MB} MB)")
+    safe_name = Path(file.filename).name
+    dest = UPLOAD_DIR / safe_name
+    dest.write_bytes(content)
+    return {"ok": True, "name": safe_name, "size": len(content)}
+
+
+@app.get("/uploads")
+async def get_uploads():
+    return list_uploads()
+
+
+@app.delete("/uploads/{filename}")
+async def delete_upload(filename: str):
+    target = UPLOAD_DIR / Path(filename).name  # prevent path traversal
+    if not target.exists():
+        raise HTTPException(404, "Datei nicht gefunden")
+    target.unlink()
+    return {"ok": True}
 
 
 @app.get("/state")
