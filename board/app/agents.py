@@ -195,31 +195,40 @@ async def stream_agent_response(role: str, history: list[dict], user_input: str)
 
 
 async def write_round_summary(history: list[dict], round_num: int):
-    """Lässt jeden Agenten seine MD-Datei aktualisieren und schreibt Shared-Entscheidungen in company.md."""
-    client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+    """Alle 4 API-Calls parallel ausführen für ~4x schnelleres Speichern."""
+    import asyncio as _asyncio
+    from datetime import date
+
     company_ctx = build_context()
     history_text = build_history_text(history)
+    today = date.today().isoformat()
 
+    async def _call(system: str | None, prompt: str, max_tokens: int) -> str:
+        """Einzelner async API-Call über einen Thread-Pool (SDK ist synchron)."""
+        client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+        kwargs = dict(
+            model="claude-sonnet-4-6",
+            max_tokens=max_tokens,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        if system:
+            kwargs["system"] = system
+        loop = _asyncio.get_event_loop()
+        response = await loop.run_in_executor(None, lambda: client.messages.create(**kwargs))
+        return response.content[0].text.strip()
+
+    # Alle 4 Prompts vorbereiten
+    role_prompts = {}
     for role in ROLES:
         role_ctx = build_role_context(role)
-        prompt = (
+        role_prompts[role] = (
             f"{company_ctx}\n\n{role_ctx}\n\n"
             f"## Gesprächsverlauf der abgeschlossenen Runde\n\n{history_text}\n\n"
             f"Aktualisiere deine Rollendatei (cxo_{role}.md). "
             f"Schreibe nur den vollständigen, aktualisierten Inhalt der Datei — kein Kommentar drumherum. "
             f"Übernimm alle bestehenden Abschnitte, aktualisiere 'Aktuelle Prioritäten' und ergänze relevante Notizen."
         )
-        response = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=1000,
-            system=SYSTEM_PROMPTS[role],
-            messages=[{"role": "user", "content": prompt}],
-        )
-        new_content = response.content[0].text.strip()
-        (DATA_DIR / f"cxo_{role}.md").write_text(new_content, encoding="utf-8")
 
-    from datetime import date
-    today = date.today().isoformat()
     shared_prompt = (
         f"{company_ctx}\n\n"
         f"## Gesprächsverlauf der abgeschlossenen Runde\n\n{history_text}\n\n"
@@ -228,13 +237,20 @@ async def write_round_summary(history: list[dict], round_num: int):
         f"### {today} — Runde {round_num}\n\n- Punkt 1\n- Punkt 2\n\n"
         f"Gib nur den Tagebucheintrag aus, nichts weiter."
     )
-    response = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=500,
-        messages=[{"role": "user", "content": shared_prompt}],
-    )
-    entry = response.content[0].text.strip()
 
+    # Alle 4 Calls gleichzeitig
+    results = await _asyncio.gather(
+        _call(SYSTEM_PROMPTS["cfo"], role_prompts["cfo"], 1000),
+        _call(SYSTEM_PROMPTS["cio"], role_prompts["cio"], 1000),
+        _call(SYSTEM_PROMPTS["cmo"], role_prompts["cmo"], 1000),
+        _call(None, shared_prompt, 500),
+    )
+
+    # Ergebnisse schreiben
+    for role, content in zip(ROLES, results[:3]):
+        (DATA_DIR / f"cxo_{role}.md").write_text(content, encoding="utf-8")
+
+    entry = results[3]
     company_md = _read_file(DATA_DIR / "company.md")
     updated = company_md.replace(
         "<!-- Einträge werden nach jeder Diskussionsrunde hier ergänzt -->",
