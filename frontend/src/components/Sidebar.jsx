@@ -111,6 +111,21 @@ export default function Sidebar({ t, screen, onNavigate, resolvedMode, design, m
           {streakLine}
         </div>
 
+        {/* Legal links */}
+        <div style={{ marginTop: 16, fontSize: 11, color: t.ink3, fontFamily: t.sans }}>
+          <button onClick={() => onNavigate('privacy')} style={{
+            background: 'none', border: 'none', color: 'inherit', cursor: 'pointer',
+            fontFamily: 'inherit', fontSize: 'inherit', padding: 0,
+            textDecoration: 'underline', opacity: 0.7,
+          }}>Privacy</button>
+          <span style={{ margin: '0 5px' }}>·</span>
+          <button onClick={() => onNavigate('terms')} style={{
+            background: 'none', border: 'none', color: 'inherit', cursor: 'pointer',
+            fontFamily: 'inherit', fontSize: 'inherit', padding: 0,
+            textDecoration: 'underline', opacity: 0.7,
+          }}>Terms</button>
+        </div>
+
       </div>
     </aside>
   );
