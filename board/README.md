@@ -13,7 +13,7 @@ sudo htpasswd -c /etc/nginx/.htpasswd board
 
 ### 2. Nginx-Config einrichten
 ```bash
-sudo cp /opt/mltraderlog/board/nginx/board.conf /etc/nginx/sites-available/board
+sudo cp /var/www/fxledger/board/nginx/board.conf /etc/nginx/sites-available/board
 sudo ln -s /etc/nginx/sites-available/board /etc/nginx/sites-enabled/board
 sudo nginx -t && sudo systemctl reload nginx
 ```
@@ -25,14 +25,14 @@ sudo certbot --nginx -d board.areafx.de
 
 ### 4. .env anlegen
 ```bash
-cp /opt/mltraderlog/board/.env.example /opt/mltraderlog/board/.env
-nano /opt/mltraderlog/board/.env
+cp /var/www/fxledger/board/.env.example /var/www/fxledger/board/.env
+nano /var/www/fxledger/board/.env
 # ANTHROPIC_API_KEY eintragen
 ```
 
 ### 5. Container starten
 ```bash
-cd /opt/mltraderlog/board
+cd /var/www/fxledger/board
 docker compose up --build -d
 ```
 
@@ -41,7 +41,7 @@ docker compose up --build -d
 ## Deployment nach Code-Änderungen
 
 ```bash
-cd /opt/mltraderlog
+cd /var/www/fxledger
 git pull
 cd board
 docker compose up --build -d
