@@ -12,6 +12,7 @@ import AuthScreen from './components/AuthScreen.jsx';
 import Profile from './components/Profile.jsx';
 import DeleteAccount from './components/DeleteAccount.jsx';
 import LegalPage from './components/LegalPage.jsx';
+import CookieBanner from './components/CookieBanner.jsx';
 import { LANG_KEY, DEFAULT_LANG, createT } from './i18n.js';
 
 const API = '/api';
@@ -46,6 +47,7 @@ export default function App() {
   const themeKey = `${design}-${resolvedMode}`;
   const t = THEMES[themeKey] || THEMES['linen-dark'];
 
+  const [cookieConsent, setCookieConsent] = useState(() => localStorage.getItem('cookie_consent'));
   const [legalNav, setLegalNav] = useState(null); // 'privacy' | 'terms' | null — works without login
   const [tradeView, setTradeView] = useState(() => localStorage.getItem(VIEW_KEY) || 'list');
   const [nav, setNav] = useState(() => {
@@ -120,8 +122,14 @@ export default function App() {
 
   const authHeaders = useCallback(() => ({
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
+    'Authorization': `Bearer ${token}`, // kept for backwards compat; cookie is primary
   }), [token]);
+
+  const authFetch = useCallback((url, opts = {}) => fetch(url, {
+    ...opts,
+    credentials: 'include',
+    headers: { ...authHeaders(), ...(opts.headers || {}) },
+  }), [authHeaders]);
 
   // On startup: DB wins — load design+mode+account from server and apply
   useEffect(() => {
@@ -150,6 +158,7 @@ export default function App() {
   };
 
   const handleSignOut = () => {
+    fetch(`${API}/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(NAV_KEY);
@@ -231,12 +240,20 @@ export default function App() {
 
   if (!token) {
     return (
-      <AuthScreen
-        t={t} onAuth={handleAuth} lang={lang}
-        resolvedMode={resolvedMode} design={design} mode={mode}
-        onSetDesign={setDesignPref} onSetMode={setModePref}
-        onNavigateLegal={setLegalNav}
-      />
+      <>
+        <AuthScreen
+          t={t} onAuth={handleAuth} lang={lang}
+          resolvedMode={resolvedMode} design={design} mode={mode}
+          onSetDesign={setDesignPref} onSetMode={setModePref}
+          onNavigateLegal={setLegalNav}
+        />
+        {!cookieConsent && (
+          <CookieBanner t={t} onAccept={(level) => {
+            localStorage.setItem('cookie_consent', level);
+            setCookieConsent(level);
+          }} />
+        )}
+      </>
     );
   }
 
@@ -360,6 +377,12 @@ export default function App() {
         user={user}
       />
       {screen}
+      {!cookieConsent && (
+        <CookieBanner t={t} onAccept={(level) => {
+          localStorage.setItem('cookie_consent', level);
+          setCookieConsent(level);
+        }} />
+      )}
     </div>
   );
 }
