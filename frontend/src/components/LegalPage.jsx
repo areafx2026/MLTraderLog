@@ -107,8 +107,8 @@ const TERMS = {
           headers: ['Plan', 'Price', 'Features'],
           rows: [
             ['Free', '€0.00 / month', 'Basic features, limited entries'],
-            ['Basic', 'TBD / month', 'Extended features'],
-            ['Premium', 'TBD / month', 'All features, unlimited entries'],
+            ['Basic', '€10.00 / month', 'Extended features'],
+            ['Premium', '€30.00 / month', 'All features, unlimited entries'],
           ],
         }},
         { p: 'The current features of each plan are described at www.fxledger.com/pricing.' },
