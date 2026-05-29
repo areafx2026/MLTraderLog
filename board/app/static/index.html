@@ -280,9 +280,9 @@
       <h3>Dokumente für Agenten</h3>
       <div id="drop-zone">
         📎 Datei ablegen oder klicken<br>
-        <span style="font-size:11px">.txt · .md · .pdf · max 10 MB</span>
+        <span style="font-size:11px">.txt · .md · .pdf · .png · .jpg · .webp · max 10 MB</span>
       </div>
-      <input type="file" id="file-input" accept=".txt,.md,.pdf" style="display:none">
+      <input type="file" id="file-input" accept=".txt,.md,.pdf,.png,.jpg,.jpeg,.gif,.webp" style="display:none">
       <div id="file-list"></div>
     </div>
   </div>
@@ -390,6 +390,7 @@ async function startStream() {
     streaming = false;
     setStatus('Warte auf CEO', true);
     setButtons(true);
+    loadFiles(); // pending → used aktualisieren
   });
 
   currentEventSource.addEventListener('done', () => {
@@ -475,11 +476,13 @@ async function loadFiles() {
   const files = await res.json();
   fileList.innerHTML = '';
   files.forEach(f => {
+    const used = f.status === 'used';
     const item = document.createElement('div');
     item.className = 'file-item';
+    item.style.opacity = used ? '0.45' : '1';
     item.innerHTML = `
-      <span title="${f.name}">${f.name}</span>
-      <span class="file-size">${formatSize(f.size)}</span>
+      <span title="${f.name}" style="${used ? 'text-decoration:line-through' : ''}">${f.name}</span>
+      <span class="file-size">${used ? 'gelesen · ' : ''}${formatSize(f.size)}</span>
       <button class="btn-delete" title="Löschen" data-name="${f.name}">✕</button>
     `;
     fileList.appendChild(item);

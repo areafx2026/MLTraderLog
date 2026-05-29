@@ -1,10 +1,22 @@
+import base64
 import os
 import anthropic
 from pathlib import Path
 
 DATA_DIR = Path("/data")
-UPLOAD_DIR = DATA_DIR / "uploads"
+UPLOAD_DIR = DATA_DIR / "uploads" / "pending"
+USED_DIR   = DATA_DIR / "uploads" / "used"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+USED_DIR.mkdir(parents=True, exist_ok=True)
+
+IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
+TEXT_SUFFIXES  = {".txt", ".md", ".pdf"}
+ALLOWED_SUFFIXES = IMAGE_SUFFIXES | TEXT_SUFFIXES
+
+MIME_MAP = {
+    ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+    ".gif": "image/gif", ".webp": "image/webp",
+}
 
 ROLES = ["cfo", "cio", "cmo"]  # CEO = User; Reihenfolge der Agenten pro Runde
 
@@ -40,7 +52,7 @@ def _read_file(path: Path) -> str:
 
 
 def extract_text(path: Path) -> str:
-    """Extrahiert Text aus .txt, .md oder .pdf Dateien."""
+    """Extrahiert Text aus .txt, .md oder .pdf."""
     if path.suffix.lower() == ".pdf":
         try:
             from pypdf import PdfReader
@@ -52,37 +64,80 @@ def extract_text(path: Path) -> str:
 
 
 def list_uploads() -> list[dict]:
-    """Gibt alle hochgeladenen Dateien zurück."""
+    """Gibt pending + used Dateien zurück."""
     files = []
     for f in sorted(UPLOAD_DIR.iterdir()):
         if f.is_file():
-            files.append({"name": f.name, "size": f.stat().st_size})
+            files.append({"name": f.name, "size": f.stat().st_size, "status": "pending"})
+    for f in sorted(USED_DIR.iterdir()):
+        if f.is_file():
+            files.append({"name": f.name, "size": f.stat().st_size, "status": "used"})
     return files
 
 
-def build_uploads_context() -> str:
-    """Baut den Kontext-Block aus allen hochgeladenen Dateien."""
-    files = list(UPLOAD_DIR.iterdir()) if UPLOAD_DIR.exists() else []
-    files = [f for f in files if f.is_file()]
-    if not files:
-        return ""
-    parts = []
-    for f in sorted(files):
-        content = extract_text(f)
-        if content:
-            parts.append(f"### Datei: {f.name}\n\n{content}")
-    if not parts:
-        return ""
-    return "# Hochgeladene Dokumente\n\n" + "\n\n---\n\n".join(parts)
+def _mark_used(path: Path):
+    """Verschiebt eine Datei von pending nach used."""
+    dest = USED_DIR / path.name
+    # Falls Dateiname bereits in used existiert, überschreiben
+    path.rename(dest)
+
+
+def build_message_content(company_ctx: str, role_ctx: str, history_text: str, user_input: str, role: str) -> list:
+    """
+    Baut den message-content für die Claude API.
+    Pending-Dateien werden einmalig eingebunden und danach als 'used' markiert.
+    Bilder kommen als vision-Blöcke, Texte/PDFs als Text.
+    """
+    pending = sorted(UPLOAD_DIR.iterdir()) if UPLOAD_DIR.exists() else []
+    pending = [f for f in pending if f.is_file()]
+
+    text_intro = (
+        f"{company_ctx}\n\n{role_ctx}\n\n"
+        f"## Bisheriger Gesprächsverlauf dieser Runde\n\n{history_text}\n\n"
+        f"## Neuer Impuls vom CEO\n\n{user_input}\n\n"
+    )
+
+    content: list = []
+
+    # Text-Block mit Intro
+    text_parts = [text_intro]
+
+    for f in pending:
+        suffix = f.suffix.lower()
+        if suffix in TEXT_SUFFIXES:
+            extracted = extract_text(f)
+            if extracted:
+                text_parts.append(f"## Hochgeladenes Dokument: {f.name}\n\n{extracted}\n\n")
+        elif suffix in IMAGE_SUFFIXES:
+            # Erst alle bisherigen Text-Teile zusammenfassen
+            content.append({"type": "text", "text": "".join(text_parts)})
+            text_parts = []
+            # Bild als vision-Block
+            mime = MIME_MAP.get(suffix, "image/png")
+            data = base64.standard_b64encode(f.read_bytes()).decode()
+            content.append({
+                "type": "image",
+                "source": {"type": "base64", "media_type": mime, "data": data},
+            })
+            content.append({"type": "text", "text": f"(Oben: Screenshot '{f.name}')\n\n"})
+
+    # Abschließender Text-Block mit Aufforderung
+    text_parts.append(f"Antworte jetzt als {ROLE_LABELS[role]}. Maximal 150 Wörter.")
+    content.append({"type": "text", "text": "".join(text_parts)})
+
+    # Alle pending als used markieren
+    for f in pending:
+        try:
+            _mark_used(f)
+        except Exception:
+            pass
+
+    return content
 
 
 def build_context() -> str:
     company = _read_file(DATA_DIR / "company.md")
-    uploads = build_uploads_context()
-    ctx = f"# Unternehmenskontext\n\n{company}"
-    if uploads:
-        ctx += f"\n\n{uploads}"
-    return ctx
+    return f"# Unternehmenskontext\n\n{company}"
 
 
 def build_role_context(role: str) -> str:
@@ -109,18 +164,13 @@ async def stream_agent_response(role: str, history: list[dict], user_input: str)
     role_ctx = build_role_context(role)
     history_text = build_history_text(history)
 
-    user_message = (
-        f"{company_ctx}\n\n{role_ctx}\n\n"
-        f"## Bisheriger Gesprächsverlauf dieser Runde\n\n{history_text}\n\n"
-        f"## Neuer Impuls vom CEO\n\n{user_input}\n\n"
-        f"Antworte jetzt als {ROLE_LABELS[role]}. Maximal 150 Wörter."
-    )
+    content = build_message_content(company_ctx, role_ctx, history_text, user_input, role)
 
     with client.messages.stream(
         model="claude-sonnet-4-6",
         max_tokens=400,
         system=SYSTEM_PROMPTS[role],
-        messages=[{"role": "user", "content": user_message}],
+        messages=[{"role": "user", "content": content}],
     ) as stream:
         for text in stream.text_stream:
             yield text
@@ -132,7 +182,6 @@ async def write_round_summary(history: list[dict], round_num: int):
     company_ctx = build_context()
     history_text = build_history_text(history)
 
-    # Jeder Agent schreibt in seine eigene MD
     for role in ROLES:
         role_ctx = build_role_context(role)
         prompt = (
@@ -151,7 +200,6 @@ async def write_round_summary(history: list[dict], round_num: int):
         new_content = response.content[0].text.strip()
         (DATA_DIR / f"cxo_{role}.md").write_text(new_content, encoding="utf-8")
 
-    # Shared-Entscheidungen in company.md
     from datetime import date
     today = date.today().isoformat()
     shared_prompt = (

@@ -12,7 +12,7 @@ from sse_starlette.sse import EventSourceResponse
 
 load_dotenv()
 
-from agents import ROLES, ROLE_LABELS, stream_agent_response, write_round_summary, UPLOAD_DIR, list_uploads
+from agents import ROLES, ROLE_LABELS, stream_agent_response, write_round_summary, UPLOAD_DIR, USED_DIR, list_uploads, ALLOWED_SUFFIXES
 
 app = FastAPI()
 
@@ -110,15 +110,15 @@ async def stream(request: Request):
     return EventSourceResponse(generator())
 
 
-ALLOWED_EXTENSIONS = {".txt", ".md", ".pdf"}
 MAX_SIZE_MB = 10
 
 
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
     suffix = Path(file.filename).suffix.lower()
-    if suffix not in ALLOWED_EXTENSIONS:
-        raise HTTPException(400, f"Nicht unterstütztes Format. Erlaubt: {', '.join(ALLOWED_EXTENSIONS)}")
+    if suffix not in ALLOWED_SUFFIXES:
+        exts = ", ".join(sorted(ALLOWED_SUFFIXES))
+        raise HTTPException(400, f"Nicht unterstütztes Format. Erlaubt: {exts}")
     content = await file.read()
     if len(content) > MAX_SIZE_MB * 1024 * 1024:
         raise HTTPException(400, f"Datei zu groß (max {MAX_SIZE_MB} MB)")
@@ -135,11 +135,14 @@ async def get_uploads():
 
 @app.delete("/uploads/{filename}")
 async def delete_upload(filename: str):
-    target = UPLOAD_DIR / Path(filename).name  # prevent path traversal
-    if not target.exists():
-        raise HTTPException(404, "Datei nicht gefunden")
-    target.unlink()
-    return {"ok": True}
+    safe = Path(filename).name  # prevent path traversal
+    # Suche in pending und used
+    for folder in (UPLOAD_DIR, USED_DIR):
+        target = folder / safe
+        if target.exists():
+            target.unlink()
+            return {"ok": True}
+    raise HTTPException(404, "Datei nicht gefunden")
 
 
 @app.get("/state")
