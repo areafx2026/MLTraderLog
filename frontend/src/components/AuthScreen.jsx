@@ -460,17 +460,20 @@ export default function AuthScreen({ t, onAuth, lang = 'en', resolvedMode = 'dar
           marginTop: 32, textAlign: 'center',
           fontFamily: t.sans, fontSize: 12, color: t.ink3,
         }}>
-          <button onClick={() => onNavigateLegal?.('privacy')} style={{
-            background: 'none', border: 'none', color: t.ink3, cursor: 'pointer',
-            fontFamily: 'inherit', fontSize: 'inherit', padding: 0,
-            textDecoration: 'underline',
-          }}>Privacy Policy</button>
-          <span style={{ margin: '0 8px' }}>·</span>
-          <button onClick={() => onNavigateLegal?.('terms')} style={{
-            background: 'none', border: 'none', color: t.ink3, cursor: 'pointer',
-            fontFamily: 'inherit', fontSize: 'inherit', padding: 0,
-            textDecoration: 'underline',
-          }}>Terms and Conditions</button>
+          {[
+            { id: 'privacy',      label: 'Privacy Policy' },
+            { id: 'terms',        label: 'Terms' },
+            { id: 'datenschutz',  label: 'Data Protection' },
+          ].map(({ id, label }, i, arr) => (
+            <span key={id}>
+              <button onClick={() => onNavigateLegal?.(id)} style={{
+                background: 'none', border: 'none', color: t.ink3, cursor: 'pointer',
+                fontFamily: 'inherit', fontSize: 'inherit', padding: 0,
+                textDecoration: 'underline',
+              }}>{label}</button>
+              {i < arr.length - 1 && <span style={{ margin: '0 8px' }}>·</span>}
+            </span>
+          ))}
         </div>
 
       </div>
