@@ -11,6 +11,7 @@ import Settings from './components/Settings.jsx';
 import AuthScreen from './components/AuthScreen.jsx';
 import Profile from './components/Profile.jsx';
 import DeleteAccount from './components/DeleteAccount.jsx';
+import LegalPage from './components/LegalPage.jsx';
 import { LANG_KEY, DEFAULT_LANG, createT } from './i18n.js';
 
 const API = '/api';
@@ -45,6 +46,7 @@ export default function App() {
   const themeKey = `${design}-${resolvedMode}`;
   const t = THEMES[themeKey] || THEMES['linen-dark'];
 
+  const [legalNav, setLegalNav] = useState(null); // 'privacy' | 'terms' | null — works without login
   const [tradeView, setTradeView] = useState(() => localStorage.getItem(VIEW_KEY) || 'list');
   const [nav, setNav] = useState(() => {
     try { return JSON.parse(localStorage.getItem(NAV_KEY)) || { screen: 'today', tradeId: null }; }
@@ -215,12 +217,25 @@ export default function App() {
     else setLoading(false);
   }, [token, fetchTrades]);
 
+  if (legalNav) {
+    return (
+      <div style={{
+        width: '100vw', height: '100vh', display: 'flex',
+        background: resolvedMode === 'light' ? t.paper : t.bg,
+        color: t.ink, fontFamily: t.sans, fontSize: 14, overflow: 'hidden',
+      }}>
+        <LegalPage t={t} type={legalNav} onBack={() => setLegalNav(null)} />
+      </div>
+    );
+  }
+
   if (!token) {
     return (
       <AuthScreen
         t={t} onAuth={handleAuth} lang={lang}
         resolvedMode={resolvedMode} design={design} mode={mode}
         onSetDesign={setDesignPref} onSetMode={setModePref}
+        onNavigateLegal={setLegalNav}
       />
     );
   }
@@ -297,6 +312,10 @@ export default function App() {
           }}
         />
       );
+      break;
+    case 'privacy':
+    case 'terms':
+      screen = <LegalPage t={t} type={nav.screen} onBack={() => navigate('today')} />;
       break;
     default:
       screen = (

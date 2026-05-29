@@ -454,6 +454,25 @@ export default function AuthScreen({ t, onAuth, lang = 'en', resolvedMode = 'dar
             </>
           )}
         </div>
+
+        {/* Legal links */}
+        <div style={{
+          marginTop: 32, textAlign: 'center',
+          fontFamily: t.sans, fontSize: 12, color: t.ink3,
+        }}>
+          <button onClick={() => onNavigateLegal?.('privacy')} style={{
+            background: 'none', border: 'none', color: t.ink3, cursor: 'pointer',
+            fontFamily: 'inherit', fontSize: 'inherit', padding: 0,
+            textDecoration: 'underline',
+          }}>Privacy Policy</button>
+          <span style={{ margin: '0 8px' }}>·</span>
+          <button onClick={() => onNavigateLegal?.('terms')} style={{
+            background: 'none', border: 'none', color: t.ink3, cursor: 'pointer',
+            fontFamily: 'inherit', fontSize: 'inherit', padding: 0,
+            textDecoration: 'underline',
+          }}>Terms and Conditions</button>
+        </div>
+
       </div>
     </div>
   );
