@@ -1,0 +1,11 @@
+services:
+  board:
+    build: .
+    container_name: fxledger_board
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./data:/data
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
