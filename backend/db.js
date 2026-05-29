@@ -106,6 +106,13 @@ const initDb = async () => {
       // Account settings: starting balance + preferred currency
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS account_currency VARCHAR(3) NOT NULL DEFAULT 'EUR'`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS account_balance NUMERIC(12,2) NOT NULL DEFAULT 0`,
+      `CREATE TABLE IF NOT EXISTS waitlist (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        consent BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS waitlist_email_idx ON waitlist (lower(email))`,
     ];
     for (const sql of migrations) {
       await client.query(sql);

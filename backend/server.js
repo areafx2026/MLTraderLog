@@ -196,6 +196,24 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
+// ── Waitlist ──────────────────────────────────────────────────────────────────
+
+app.post('/api/waitlist', async (req, res) => {
+  const { email, consent } = req.body;
+  if (!email || !email.includes('@')) return res.status(400).json({ error: 'Valid email required.' });
+  if (!consent) return res.status(400).json({ error: 'Consent required.' });
+  try {
+    await pool.query(
+      'INSERT INTO waitlist (email, consent) VALUES ($1, $2) ON CONFLICT (email) DO NOTHING',
+      [email.toLowerCase().trim(), true]
+    );
+    res.status(201).json({ ok: true });
+  } catch (err) {
+    console.error('Waitlist error:', err);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
 app.post('/api/auth/logout', (req, res) => {
   res.clearCookie('fxl_session', { path: '/' });
   res.json({ ok: true });

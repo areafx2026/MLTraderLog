@@ -12,6 +12,8 @@ import AuthScreen from './components/AuthScreen.jsx';
 import Profile from './components/Profile.jsx';
 import DeleteAccount from './components/DeleteAccount.jsx';
 import LegalPage from './components/LegalPage.jsx';
+import LandingPage from './components/LandingPage.jsx';
+import ConsentGate from './components/ConsentGate.jsx';
 import CookieBanner from './components/CookieBanner.jsx';
 import { LANG_KEY, DEFAULT_LANG, createT } from './i18n.js';
 
@@ -48,6 +50,7 @@ export default function App() {
   const t = THEMES[themeKey] || THEMES['linen-dark'];
 
   const [cookieConsent, setCookieConsent] = useState(() => localStorage.getItem('cookie_consent'));
+  const [showLanding, setShowLanding] = useState(true); // false = go to auth
   const [legalNav, setLegalNav] = useState(null); // 'privacy' | 'terms' | null — works without login
   const [tradeView, setTradeView] = useState(() => localStorage.getItem(VIEW_KEY) || 'list');
   const [nav, setNav] = useState(() => {
@@ -226,6 +229,7 @@ export default function App() {
     else setLoading(false);
   }, [token, fetchTrades]);
 
+  // legalNav for logged-in users
   if (legalNav) {
     return (
       <div style={{
@@ -239,20 +243,55 @@ export default function App() {
   }
 
   if (!token) {
+    const handleCookieAccept = (level) => {
+      localStorage.setItem('cookie_consent', level);
+      setCookieConsent(level);
+    };
+
+    // 1) Consent gate — blocks everything until user makes a choice
+    if (!cookieConsent) {
+      return (
+        <>
+          {legalNav ? (
+            <div style={{ width: '100vw', height: '100vh', background: resolvedMode === 'light' ? t.paper : t.bg, color: t.ink, fontFamily: t.sans, fontSize: 14, display: 'flex' }}>
+              <LegalPage t={t} type={legalNav} onBack={() => setLegalNav(null)} />
+            </div>
+          ) : (
+            <ConsentGate t={t} onAccept={handleCookieAccept} onNavigate={setLegalNav} />
+          )}
+        </>
+      );
+    }
+
+    // 2) Legal page (from landing or auth screen links)
+    if (legalNav) {
+      return (
+        <div style={{ width: '100vw', height: '100vh', background: resolvedMode === 'light' ? t.paper : t.bg, color: t.ink, fontFamily: t.sans, fontSize: 14, display: 'flex' }}>
+          <LegalPage t={t} type={legalNav} onBack={() => setLegalNav(null)} />
+        </div>
+      );
+    }
+
+    // 3) Landing page
+    if (showLanding) {
+      return (
+        <LandingPage
+          t={t} design={design} resolvedMode={resolvedMode}
+          onEnterApp={() => setShowLanding(false)}
+          onNavigateLegal={setLegalNav}
+        />
+      );
+    }
+
+    // 4) Auth screen
     return (
       <>
         <AuthScreen
           t={t} onAuth={handleAuth} lang={lang}
           resolvedMode={resolvedMode} design={design} mode={mode}
           onSetDesign={setDesignPref} onSetMode={setModePref}
-          onNavigateLegal={setLegalNav}  // accepts 'privacy' | 'terms' | 'datenschutz'
+          onNavigateLegal={setLegalNav}
         />
-        {!cookieConsent && (
-          <CookieBanner t={t} onAccept={(level) => {
-            localStorage.setItem('cookie_consent', level);
-            setCookieConsent(level);
-          }} />
-        )}
       </>
     );
   }
