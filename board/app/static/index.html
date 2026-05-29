@@ -195,6 +195,63 @@
     color: var(--muted);
     line-height: 1.5;
   }
+
+  #upload-section {
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+  }
+
+  #upload-section h3 {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  #drop-zone {
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  #drop-zone:hover, #drop-zone.drag-over {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  #file-list { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+
+  .file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .file-item span { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-item .file-size { color: var(--muted); font-size: 11px; flex-shrink: 0; margin-left: 6px; }
+
+  .btn-delete {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0 0 0 6px;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .btn-delete:hover { color: #f76a6a; }
 </style>
 </head>
 <body>
@@ -218,6 +275,16 @@
       <button id="btn-end" disabled>Runde beenden &amp; speichern</button>
     </div>
     <div id="hint">Starte eine Runde mit einem Impuls. Die CxOs antworten der Reihe nach. Du kannst jederzeit einen neuen Impuls geben oder die Runde beenden.</div>
+
+    <div id="upload-section">
+      <h3>Dokumente für Agenten</h3>
+      <div id="drop-zone">
+        📎 Datei ablegen oder klicken<br>
+        <span style="font-size:11px">.txt · .md · .pdf · max 10 MB</span>
+      </div>
+      <input type="file" id="file-input" accept=".txt,.md,.pdf" style="display:none">
+      <div id="file-list"></div>
+    </div>
   </div>
 </main>
 
@@ -390,6 +457,69 @@ input.addEventListener('keydown', e => {
     else btnNext.click();
   }
 });
+
+// ── File Upload ───────────────────────────────────────────────────────────────
+
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const fileList = document.getElementById('file-list');
+
+function formatSize(bytes) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+async function loadFiles() {
+  const res = await fetch('/uploads');
+  const files = await res.json();
+  fileList.innerHTML = '';
+  files.forEach(f => {
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    item.innerHTML = `
+      <span title="${f.name}">${f.name}</span>
+      <span class="file-size">${formatSize(f.size)}</span>
+      <button class="btn-delete" title="Löschen" data-name="${f.name}">✕</button>
+    `;
+    fileList.appendChild(item);
+  });
+  fileList.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await fetch(`/uploads/${encodeURIComponent(btn.dataset.name)}`, { method: 'DELETE' });
+      loadFiles();
+    });
+  });
+}
+
+async function uploadFile(file) {
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch('/upload', { method: 'POST', body: form });
+  if (!res.ok) {
+    const err = await res.json();
+    alert(`Upload fehlgeschlagen: ${err.detail}`);
+    return;
+  }
+  loadFiles();
+}
+
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) uploadFile(fileInput.files[0]);
+  fileInput.value = '';
+});
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) uploadFile(e.dataTransfer.files[0]);
+});
+
+// Beim Start Dateiliste laden
+loadFiles();
 </script>
 </body>
 </html>

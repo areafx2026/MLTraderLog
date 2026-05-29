@@ -3,6 +3,8 @@ import anthropic
 from pathlib import Path
 
 DATA_DIR = Path("/data")
+UPLOAD_DIR = DATA_DIR / "uploads"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 ROLES = ["cfo", "cio", "cmo"]  # CEO = User; Reihenfolge der Agenten pro Runde
 
@@ -37,9 +39,50 @@ def _read_file(path: Path) -> str:
     return ""
 
 
+def extract_text(path: Path) -> str:
+    """Extrahiert Text aus .txt, .md oder .pdf Dateien."""
+    if path.suffix.lower() == ".pdf":
+        try:
+            from pypdf import PdfReader
+            reader = PdfReader(str(path))
+            return "\n\n".join(page.extract_text() or "" for page in reader.pages).strip()
+        except Exception as e:
+            return f"[PDF konnte nicht gelesen werden: {e}]"
+    return _read_file(path)
+
+
+def list_uploads() -> list[dict]:
+    """Gibt alle hochgeladenen Dateien zurück."""
+    files = []
+    for f in sorted(UPLOAD_DIR.iterdir()):
+        if f.is_file():
+            files.append({"name": f.name, "size": f.stat().st_size})
+    return files
+
+
+def build_uploads_context() -> str:
+    """Baut den Kontext-Block aus allen hochgeladenen Dateien."""
+    files = list(UPLOAD_DIR.iterdir()) if UPLOAD_DIR.exists() else []
+    files = [f for f in files if f.is_file()]
+    if not files:
+        return ""
+    parts = []
+    for f in sorted(files):
+        content = extract_text(f)
+        if content:
+            parts.append(f"### Datei: {f.name}\n\n{content}")
+    if not parts:
+        return ""
+    return "# Hochgeladene Dokumente\n\n" + "\n\n---\n\n".join(parts)
+
+
 def build_context() -> str:
     company = _read_file(DATA_DIR / "company.md")
-    return f"# Unternehmenskontext\n\n{company}"
+    uploads = build_uploads_context()
+    ctx = f"# Unternehmenskontext\n\n{company}"
+    if uploads:
+        ctx += f"\n\n{uploads}"
+    return ctx
 
 
 def build_role_context(role: str) -> str:
