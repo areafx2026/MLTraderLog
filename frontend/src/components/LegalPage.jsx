@@ -10,7 +10,7 @@ const PRIVACY = {
     {
       h2: '1. Controller',
       body: [
-        { p: 'Klaus Meier · [Street + House Number] · [Postal Code] [City], Germany' },
+        { p: 'Sascha Cwetanski · Bornholmring 20 · 23560 Luebeck, Germany' },
         { p: 'Email: contactme@fxledger.com · Website: www.fxledger.com' },
       ],
     },
