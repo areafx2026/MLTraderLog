@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 const nodemailer = require('nodemailer');
 const { pool, initDb, mapTrade } = require('./db');
 
@@ -56,19 +57,37 @@ const app = express();
 const PORT = process.env.PORT || 3002;
 const JWT_SECRET = process.env.JWT_SECRET || 'forexlog-dev-secret-change-in-prod';
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || true, // true mirrors request Origin — allows credentials in dev
+  credentials: true,
+}));
+app.use(cookieParser());
 app.use(express.json());
 app.use('/uploads', express.static('/app/uploads'));
 
 // ── Auth middleware ──────────────────────────────────────────────────────────
 
+// Helper: set HttpOnly session cookie (30 days, matches JWT expiry)
+function setSessionCookie(res, token) {
+  res.cookie('fxl_session', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    path: '/',
+  });
+}
+
 function requireAuth(req, res, next) {
+  // Prefer HttpOnly cookie, fall back to Authorization header (backwards compat)
+  const cookieToken = req.cookies?.fxl_session;
   const header = req.headers['authorization'];
-  if (!header || !header.startsWith('Bearer ')) {
+  const token = cookieToken || (header?.startsWith('Bearer ') ? header.slice(7) : null);
+  if (!token) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   try {
-    req.user = jwt.verify(header.slice(7), JWT_SECRET);
+    req.user = jwt.verify(token, JWT_SECRET);
     next();
   } catch {
     res.status(401).json({ error: 'Invalid token' });
@@ -153,6 +172,7 @@ app.post('/api/auth/register', async (req, res) => {
         { userId: user.id, email: user.email, username: user.username },
         JWT_SECRET, { expiresIn: '30d' }
       );
+      setSessionCookie(res, token);
       return res.status(201).json({ token, user: { id: user.id, email: user.email, username: user.username, design: safeDesign, colorMode: safeMode, accountCurrency: 'EUR', accountBalance: 0 } });
     }
 
@@ -174,6 +194,11 @@ app.post('/api/auth/register', async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  res.clearCookie('fxl_session', { path: '/' });
+  res.json({ ok: true });
 });
 
 app.post('/api/auth/login', async (req, res) => {
@@ -204,6 +229,7 @@ app.post('/api/auth/login', async (req, res) => {
       { userId: user.id, email: user.email, username: user.username },
       JWT_SECRET, { expiresIn: '30d' }
     );
+    setSessionCookie(res, token);
     res.json({ token, user: { id: user.id, email: user.email, username: user.username, design: user.design || 'hyper', colorMode: user.color_mode || 'dark', accountCurrency: user.account_currency || 'EUR', accountBalance: parseFloat(user.account_balance) || 0 } });
   } catch (err) {
     console.error(err);
@@ -238,6 +264,7 @@ app.post('/api/auth/verify-email', async (req, res) => {
       { userId: user.id, email: user.email, username: user.username },
       JWT_SECRET, { expiresIn: '30d' }
     );
+    setSessionCookie(res, token);
     res.json({ token, user: { id: user.id, email: user.email, username: user.username, design: user.design || 'hyper', colorMode: user.color_mode || 'dark', accountCurrency: user.account_currency || 'EUR', accountBalance: parseFloat(user.account_balance) || 0 } });
   } catch (err) {
     console.error(err);
