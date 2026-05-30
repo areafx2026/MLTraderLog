@@ -410,7 +410,8 @@ export default function LegalPage({ t, type, onBack }) {
   const doc = type === 'privacy' ? PRIVACY : type === 'datenschutz' ? DATENSCHUTZ : TERMS;
 
   return (
-    <div style={{ flex: 1, padding: '56px 72px 60px', overflow: 'auto', minWidth: 0 }}>
+    <div style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
+      <div style={{ maxWidth: 760, margin: '0 auto', padding: '56px 40px 60px' }}>
       {/* Back */}
       <button onClick={onBack} style={{
         background: 'transparent', border: 'none', cursor: 'pointer',
@@ -447,6 +448,7 @@ export default function LegalPage({ t, type, onBack }) {
             <Body t={t} items={sec.body} />
           </section>
         ))}
+      </div>
       </div>
     </div>
   );
