@@ -11,7 +11,7 @@ const PRIVACY = {
       h2: '1. Controller',
       body: [
         { p: 'Sascha Cwetanski · Bornholmring 20 · 23560 Luebeck, Germany' },
-        { p: 'Email: contactme@fxledger.com · Website: www.fxledger.com' },
+        { p: 'Email: contactme@fxledger.de · Website: www.fxledger.de' },
       ],
     },
     {
@@ -64,7 +64,7 @@ const PRIVACY = {
           'Data portability (Art. 20 GDPR): Export of your data in machine-readable format',
           'Objection (Art. 21 GDPR): Objection to processing based on legitimate interests',
         ]},
-        { p: 'To exercise your rights, contact us at: contactme@fxledger.com' },
+        { p: 'To exercise your rights, contact us at: contactme@fxledger.de' },
         { p: 'You also have the right to lodge a complaint with the Independent Centre for Privacy Protection Schleswig-Holstein (ULD): datenschutzzentrum.de' },
       ],
     },
@@ -83,7 +83,7 @@ const PRIVACY = {
     {
       h2: '8. Changes to This Privacy Policy',
       body: [
-        { p: 'We reserve the right to update this policy when the service or applicable law changes. The current version is always available at www.fxledger.com/privacy.' },
+        { p: 'We reserve the right to update this policy when the service or applicable law changes. The current version is always available at www.fxledger.de/privacy.' },
       ],
     },
   ],
@@ -97,7 +97,7 @@ const DATENSCHUTZ = {
       h2: '1. Controller (Art. 4 No. 7 GDPR)',
       body: [
         { p: 'Sascha Cwetanski · Bornholmring 20 · 23560 Lübeck, Germany' },
-        { p: 'Email: contactme@fxledger.com · Website: www.fxledger.com' },
+        { p: 'Email: contactme@fxledger.de · Website: www.fxledger.de' },
         { small: 'No Data Protection Officer is required under Art. 37 GDPR for this operation.' },
       ],
     },
@@ -187,7 +187,7 @@ const DATENSCHUTZ = {
             ['Withdraw consent', 'Art. 7(3)', 'Withdraw consent at any time without affecting prior processing'],
           ],
         }},
-        { p: 'To exercise any of these rights, contact: contactme@fxledger.com' },
+        { p: 'To exercise any of these rights, contact: contactme@fxledger.de' },
         { p: 'We will respond within one month (Art. 12(3) GDPR). No fee is charged for first requests.' },
       ],
     },
@@ -249,7 +249,7 @@ const TERMS = {
             ['Premium', '€30.00 / month', 'All features, unlimited entries'],
           ],
         }},
-        { p: 'The current features of each plan are described at www.fxledger.com/pricing.' },
+        { p: 'The current features of each plan are described at www.fxledger.de/pricing.' },
       ],
     },
     {
@@ -273,7 +273,7 @@ const TERMS = {
       h2: '§ 5 Cancellation',
       body: [
         { p: '(1) Paid subscriptions may be cancelled at any time, effective at the end of the current billing period.' },
-        { p: '(2) Cancellation is done via account settings at www.fxledger.com/account or by email to contactme@fxledger.com.' },
+        { p: '(2) Cancellation is done via account settings at www.fxledger.de/account or by email to contactme@fxledger.de.' },
         { p: '(3) Upon cancellation, the account is downgraded to the Free plan. Stored data is retained unless the user deletes their account.' },
         { p: "(4) The Provider may terminate the contract with 30 days' notice to the end of the month." },
       ],
@@ -281,7 +281,7 @@ const TERMS = {
     {
       h2: '§ 6 Pricing and Payment',
       body: [
-        { p: '(1) Current prices are listed at www.fxledger.com/pricing. All prices are inclusive of applicable VAT where required.' },
+        { p: '(1) Current prices are listed at www.fxledger.de/pricing. All prices are inclusive of applicable VAT where required.' },
         { p: '(2) The Provider operates as a small business under § 19 of the German VAT Act (UStG) and therefore does not charge VAT.' },
         { p: '(3) Payment is made monthly in advance by credit card or other payment methods supported by Stripe.' },
         { p: '(4) In the event of a failed payment, the Provider reserves the right to restrict access to paid features until payment is received.' },
